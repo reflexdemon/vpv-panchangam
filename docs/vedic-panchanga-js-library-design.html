@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vedic Panchanga JS Library — Design Document</title>
+<style>
+  :root {
+    --saffron: #c75b12;
+    --saffron-light: #fdf2e9;
+    --deep: #1a1a2e;
+    --mid: #2d2d44;
+    --text: #334155;
+    --text-light: #64748b;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --accent: #c75b12;
+    --green: #059669;
+    --blue: #2563eb;
+    --purple: #7c3aed;
+    --code-bg: #1e293b;
+    --radius: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* ─── Hero ─── */
+  .hero {
+    background: linear-gradient(135deg, var(--deep) 0%, var(--mid) 100%);
+    color: white;
+    padding: 64px 24px 48px;
+    text-align: center;
+  }
+  .hero h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .hero .subtitle {
+    margin-top: 8px;
+    font-size: 1.05rem;
+    color: #94a3b8;
+  }
+  .hero .meta {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    color: #64748b;
+  }
+  .hero .meta span { display: inline-flex; align-items: center; gap: 4px; }
+
+  /* ─── Layout ─── */
+  .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+  .content { padding: 40px 0 80px; }
+
+  /* ─── Sections ─── */
+  section { margin-bottom: 48px; }
+  section:last-child { margin-bottom: 0; }
+
+  h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--deep);
+    padding-bottom: 8px;
+    border-bottom: 3px solid var(--saffron);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2 .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--saffron);
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--deep);
+    margin: 24px 0 10px;
+  }
+
+  p { margin-bottom: 12px; }
+  ul, ol { margin: 8px 0 16px 20px; }
+  li { margin-bottom: 4px; }
+
+  /* ─── Cards ─── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--deep);
+    margin-bottom: 8px;
+  }
+
+  /* ─── Architecture Diagram ─── */
+  .arch {
+    background: var(--deep);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    overflow-x: auto;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.82rem;
+    line-height: 1.65;
+    color: #e2e8f0;
+    margin-bottom: 16px;
+  }
+  .arch .comment { color: #64748b; }
+  .arch .keyword { color: #93c5fd; }
+  .arch .string { color: #86efac; }
+  .arch .type { color: #c4b5fd; }
+  .arch .path { color: #fbbf24; }
+  .arch .hl { background: rgba(199, 91, 18, 0.25); border-radius: 2px; padding: 0 2px; }
+
+  /* ─── File Tree ─── */
+  .tree {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.82rem;
+    line-height: 1.8;
+    overflow-x: auto;
+  }
+  .tree .file { color: var(--text); }
+  .tree .dir { color: var(--saffron); font-weight: 600; }
+  .tree .note { color: var(--text-light); font-style: italic; font-size: 0.75rem; padding-left: 8px; }
+
+  /* ─── Type Blocks ─── */
+  .code-block {
+    background: var(--code-bg);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    color: #e2e8f0;
+    margin-bottom: 14px;
+  }
+  .code-block .kw { color: #93c5fd; }
+  .code-block .ty { color: #c4b5fd; }
+  .code-block .str { color: #86efac; }
+  .code-block .cm { color: #64748b; font-style: italic; }
+  .code-block .fn { color: #fbbf24; }
+  .code-block .num { color: #f472b6; }
+  .code-block .prop { color: #67e8f9; }
+
+  /* ─── Flow Diagram ─── */
+  .flow {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.82rem;
+    line-height: 1.8;
+    overflow-x: auto;
+  }
+  .flow .node { color: var(--saffron); font-weight: 600; }
+  .flow .arrow { color: var(--text-light); }
+  .flow .sub { color: var(--blue); }
+  .flow .dim { color: var(--text-light); }
+  .flow .hl-box { border-left: 3px solid var(--saffron); padding-left: 12px; }
+
+  /* ─── Data Flow ─── */
+  .dataflow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin: 16px 0;
+    font-size: 0.85rem;
+  }
+  .dataflow .box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-weight: 500;
+  }
+  .dataflow .box.highlight {
+    background: var(--saffron-light);
+    border-color: var(--saffron);
+    color: var(--saffron);
+  }
+  .dataflow .arrow { color: var(--text-light); font-size: 1.2rem; }
+
+  /* ─── Table ─── */
+  .table-wrap { overflow-x: auto; margin-bottom: 16px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+  }
+  th {
+    background: var(--deep);
+    color: white;
+    text-align: left;
+    padding: 10px 14px;
+    font-weight: 600;
+  }
+  td {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  tr:nth-child(even) td { background: #f1f5f9; }
+
+  /* ─── Tags ─── */
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-right: 4px;
+  }
+  .tag.green { background: #d1fae5; color: #065f46; }
+  .tag.blue { background: #dbeafe; color: #1e40af; }
+  .tag.purple { background: #ede9fe; color: #5b21b6; }
+  .tag.orange { background: #ffedd5; color: #9a3412; }
+  .tag.red { background: #fde8e8; color: #991b1b; }
+
+  /* ─── Locale Table ─── */
+  .locale-table {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .locale-table .lang-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    text-align: center;
+  }
+  .locale-table .lang-card .code {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--saffron);
+  }
+  .locale-table .lang-card .name {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin-top: 2px;
+  }
+  .locale-table .lang-card .script {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ─── Stats ─── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    text-align: center;
+  }
+  .stat-card .number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--saffron);
+  }
+  .stat-card .label {
+    font-size: 0.78rem;
+    color: var(--text-light);
+    margin-top: 2px;
+  }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 1.6rem; }
+    .arch { font-size: 0.72rem; padding: 16px; }
+    .locale-table { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .code-block { font-size: 0.72rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ HERO ══════════════════ -->
+<div class="hero">
+  <h1>Vedic Panchanga &mdash; JS Library</h1>
+  <p class="subtitle">A TypeScript port of the Drik Panchang + Kundali calculator for Node.js</p>
+  <div class="meta">
+    <span>&#128197; 2026-07-05</span>
+    <span>&#128187; TypeScript &middot; swisseph</span>
+    <span>&#127760; 3 locales bundled (en &middot; hi &middot; ta)</span>
+    <span>&#9889; ~7,900 LOC estimate</span>
+  </div>
+</div>
+
+<!-- ══════════════════ CONTENT ══════════════════ -->
+<div class="container content">
+
+<!-- ─── 1. Overview ─── -->
+<section>
+<h2><span class="num">1</span> Overview</h2>
+<p>
+  The <strong>Vedic Panchanga JS Library</strong> is a faithful TypeScript port of the
+  <a href="https://vedicpanchanga.com">vedicpanchanga.com</a> Python backend. It
+  computes the full Drik Panchang (daily calendar) and Kundali (birth chart)
+  using <strong>swisseph</strong> for astronomical calculations and pure TypeScript
+  for everything else.
+</p>
+
+<div class="stats">
+  <div class="stat-card">
+    <div class="number">2</div>
+    <div class="label">Public API functions</div>
+  </div>
+  <div class="stat-card">
+    <div class="number">17</div>
+    <div class="label">Divisional charts (D1&ndash;D60)</div>
+  </div>
+  <div class="stat-card">
+    <div class="number">10</div>
+    <div class="label">Tyajyam types</div>
+  </div>
+  <div class="stat-card">
+    <div class="number">3</div>
+    <div class="label">Bundled locales</div>
+  </div>
+  <div class="stat-card">
+    <div class="number">~30</div>
+    <div class="label">Panchang response keys</div>
+  </div>
+  <div class="stat-card">
+    <div class="number">1</div>
+    <div class="label">Runtime dependency (swisseph)</div>
+  </div>
+</div>
+</section>
+
+<!-- ─── 2. Architecture ─── -->
+<section>
+<h2><span class="num">2</span> Architecture</h2>
+
+<div class="arch">
+<span class="comment">// ── Public API ──</span>
+<span class="fn">computeDetailedPanchang</span>(date, lat, lon, tz?)  &#x2192; <span class="type">PanchangResponse</span>
+<span class="fn">computeChart</span>(birthInfo)                          &#x2192; <span class="type">ChartResponse</span>
+       &#x2193;                              &#x2193;
+<span class="comment">// ── Orchestration Layer ──</span>
+  <span class="path">api/get-panchang.ts</span>              <span class="path">api/calculate.ts</span>
+       &#x2193;                              &#x2193;
+<span class="comment">// ── Calculation Modules (pure TS) ──</span>
+  <span class="keyword">panchang</span>  &#x2192;  tithi / nakshatra / yoga / karana / moonsign sequences
+  <span class="keyword">muhurta</span>   &#x2192;  Brahma / Abhijit / Vijay / Godhuli / Nishita
+  <span class="keyword">varjyam</span>   &#x2192;  Varjyam + Amrit Kalam
+  <span class="keyword">tyajyam</span>   &#x2192;  10 inauspicious period types
+  <span class="keyword">gowri</span>     &#x2192;  Gowri Panchangam (8+8 segments)
+  <span class="keyword">hora</span>      &#x2192;  Planetary horas (12+12)
+  <span class="keyword">vargas</span>    &#x2192;  D1&ndash;D60 divisional charts
+  <span class="keyword">dasha</span>     &#x2192;  Vimshottari + Antardasha + Pratyantar
+       &#x2193;
+<span class="comment">// ── Swiss Ephemeris Adapter ──</span>
+  <span class="path">ephemeris/index.ts</span>
+       &#x2193;
+<span class="keyword">swisseph</span>  &#x2192;  calc_ut / houses_ex / rise_trans / julday / eclipses
+</div>
+</section>
+
+<!-- ─── 3. File Tree ─── -->
+<section>
+<h2><span class="num">3</span> Module Structure</h2>
+
+<div class="tree">
+<span class="dir">vedic-panchanga/</span>
+  &#x2514; src/
+     &#x251C; <span class="file">index.ts</span>                        <span class="note">// public API barrel</span>
+     &#x251C; <span class="file">types.ts</span>                         <span class="note">// all interfaces (~300 LOC)</span>
+     &#x251C; locales/
+     &#x2502;  &#x251C; <span class="file">index.ts</span>                     <span class="note">// resolver + Locale type</span>
+     &#x2502;  &#x251C; <span class="file">en.ts</span>                        <span class="note">// English (~300 LOC data)</span>
+     &#x2502;  &#x251C; <span class="file">hi.ts</span>                        <span class="note">// Hindi (Devanagari)</span>
+     &#x2502;  &#x2514; <span class="file">ta.ts</span>                        <span class="note">// Tamil script</span>
+     &#x251C; constants/
+     &#x2502;  &#x251C; <span class="file">panchang.ts</span>                   <span class="note">// tithi/nak/yoga/karana indices</span>
+     &#x2502;  &#x251C; <span class="file">vargas.ts</span>                     <span class="note">// varga defs, D30 breaks</span>
+     &#x2502;  &#x251C; <span class="file">planets.ts</span>                     <span class="note">// dasha seq, BAV rules</span>
+     &#x2502;  &#x251C; <span class="file">muhurta.ts</span>                    <span class="note">// varjyam, dur muhurta tables</span>
+     &#x2502;  &#x251C; <span class="file">aspects.ts</span>                    <span class="note">// special aspect tables</span>
+     &#x2502;  &#x2514; <span class="file">calendars.ts</span>                  <span class="note">// samvatsara, ritu, shool</span>
+     &#x251C; <span class="file">ephemeris/index.ts</span>               <span class="note">// EphemerisService (~80 LOC)</span>
+     &#x251C; calculations/
+     &#x2502;  &#x251C; <span class="file">bisection.ts</span>                  <span class="note">// core search engine (~80 LOC)</span>
+     &#x2502;  &#x251C; <span class="file">panchang.ts</span>                   <span class="note">// five limbs (~500 LOC)</span>
+     &#x2502;  &#x251C; <span class="file">sunrise.ts</span>                    <span class="note">// rise/set core</span>
+     &#x2502;  &#x251C; <span class="file">muhurta.ts</span>                    <span class="note">// auspicious timings</span>
+     &#x2502;  &#x251C; <span class="file">varjyam-amrit.ts</span>
+     &#x2502;  &#x251C; <span class="file">siddhi-yogas.ts</span>
+     &#x2502;  &#x251C; <span class="file">tarabalam.ts</span>
+     &#x2502;  &#x251C; <span class="file">chandrabalam.ts</span>
+     &#x2502;  &#x251C; <span class="file">vargas.ts</span>                     <span class="note">// D1&ndash;D60 (~250 LOC)</span>
+     &#x2502;  &#x251C; <span class="file">dasha.ts</span>                      <span class="note">// Mahadasha + Antardasha</span>
+     &#x2502;  &#x251C; <span class="file">ashtakavarga.ts</span>
+     &#x2502;  &#x251C; <span class="file">placements.ts</span>
+     &#x2502;  &#x251C; <span class="file">jaimini.ts</span>
+     &#x2502;  &#x251C; <span class="file">relationships.ts</span>
+     &#x2502;  &#x251C; <span class="file">aspects.ts</span>
+     &#x2502;  &#x251C; <span class="file">kalsarpa.ts</span>
+     &#x2502;  &#x251C; <span class="file">gowri.ts</span>
+     &#x2502;  &#x251C; <span class="file">hora.ts</span>
+     &#x2502;  &#x251C; <span class="file">nalla-neram.ts</span>
+     &#x2502;  &#x251C; tyajyam/
+     &#x2502;  &#x2502;  &#x251C; <span class="file">nakshatra.ts</span> | <span class="file">tithi.ts</span> | <span class="file">vara.ts</span> | <span class="file">amritadi.ts</span>
+     &#x2502;  &#x2502;  &#x251C; <span class="file">lagna.ts</span> | <span class="file">karana.ts</span> | <span class="file">gowri.ts</span> | <span class="file">dosha.ts</span>
+     &#x2502;  &#x2502;  &#x251C; <span class="file">tithi-lagna.ts</span> | <span class="file">tamil-month.ts</span> | <span class="file">index.ts</span>
+     &#x2502;  &#x2502;  &#x2514; <span class="note">// 10 tyajyam types</span>
+     &#x2502;  &#x251C; <span class="file">calendars.ts</span>
+     &#x2502;  &#x2514; <span class="file">ganda-mula-ravi-yoga.ts</span>
+     &#x2514; api/
+        &#x251C; <span class="file">get-panchang.ts</span>                <span class="note">// computeDetailedPanchang()</span>
+        &#x2514; <span class="file">calculate.ts</span>                   <span class="note">// computeChart()</span>
+</div>
+</section>
+
+<!-- ─── 4. Public API ─── -->
+<section>
+<h2><span class="num">4</span> Public API</h2>
+
+<div class="card">
+  <div class="card-title">1. computeDetailedPanchang() &mdash; Daily Drik Panchang</div>
+  <div class="code-block">
+    <span class="fn">computeDetailedPanchang</span>(
+      date?: <span class="ty">string</span>,        <span class="cm">// "YYYY-MM-DD", default: today</span>
+      latitude: <span class="ty">number</span>,
+      longitude: <span class="ty">number</span>,
+      timezone?: <span class="ty">string</span>,     <span class="cm">// IANA, e.g. "America/New_York"</span>
+      locale?: <span class="ty">Locale</span>        <span class="cm">// "en" | "hi" | "ta", default: "en"</span>
+    ): <span class="ty">Promise</span>&lt;<span class="ty">PanchangResponse</span>&gt;
+  </div>
+  <p style="margin: 6px 0 0; font-size:0.88rem;">
+    Returns sunrise/sunset, five limbs (tithi/nakshatra/yoga/karana/vara),
+    sequences, muhurta timings, Rahu Kalam, Gowri, Hora, Tyajyam,
+    Nalla Neram, Tarabalam, Chandrabalam, calendars, and more.
+  </p>
+</div>
+
+<div class="card">
+  <div class="card-title">2. computeChart() &mdash; Full Birth Chart (Kundali)</div>
+  <div class="code-block">
+    <span class="fn">computeChart</span>(
+      birthInfo: <span class="ty">BirthInfo</span>,   <span class="cm">// date, time, lat, lon, tz, ayanamsa</span>
+      locale?: <span class="ty">Locale</span>
+    ): <span class="ty">Promise</span>&lt;<span class="ty">ChartResponse</span>&gt;
+  </div>
+  <p style="margin: 6px 0 0; font-size:0.88rem;">
+    Returns planetary positions, 17 divisional charts, Vimshottari Dasha
+    (Mahadasha + Antardasha), Ashtakavarga, Jaimini Karakas,
+    Karakamsa, Swamsa, friendships, aspects, Kalsarpa.
+  </p>
+</div>
+</section>
+
+<!-- ─── 5. Locale System ─── -->
+<section>
+<h2><span class="num">5</span> Locale System</h2>
+
+<p>
+  All named entities (tithi, nakshatra, yoga, karana, rashi, planets,
+  samvatsara, months, ritu, directions, varga names, gowri names, karaka
+  titles, kalsarpa types) are resolved through locale tables bundled in
+  the library.
+</p>
+
+<div class="locale-table">
+  <div class="lang-card">
+    <div class="code">en</div>
+    <div class="name">English</div>
+    <div class="script">Latin script</div>
+  </div>
+  <div class="lang-card">
+    <div class="code">hi</div>
+    <div class="name">&#x939;&#x93F;&#x902;&#x926;&#x940; (Hindi)</div>
+    <div class="script">Devanagari script</div>
+  </div>
+  <div class="lang-card">
+    <div class="code">ta</div>
+    <div class="name">&#x0BA4;&#x0BAE;&#x0BBF;&#x0BB4;&#x0BCD; (Tamil)</div>
+    <div class="script">Tamil script</div>
+  </div>
+</div>
+
+<p><strong>Design principle:</strong> Astronomical IDs stay language-agnostic. Names resolve at the last mile.</p>
+
+<div class="code-block">
+<span class="cm">// Resolver pattern &mdash; all locale tables share the same shape</span>
+<span class="kw">import</span> { LOCALE_TABLES } <span class="kw">from</span> <span class="str">'./locales'</span>;
+
+<span class="kw">function</span> <span class="fn">resolveName</span>(
+  id: <span class="ty">number</span>,
+  tableKey: <span class="ty">string</span>,  <span class="cm">// e.g. "nakshatras" | "tithis" | "rashis"</span>
+  locale: <span class="ty">Locale</span>
+): <span class="ty">string</span> {
+  <span class="kw">return</span> LOCALE_TABLES[locale][tableKey][id];
+}
+
+<span class="cm">// Example: Hindi nakshatra entry</span>
+<span class="cm">// hi.ts exports: { nakshatras: ["अश्विनी", "भरणी", "कृत्तिका", ...] }</span>
+<span class="cm">// ta.ts exports: { nakshatras: ["அஸ்வினி", "பரணி", "கார்த்திகை", ...] }</span>
+</div>
+</section>
+
+<!-- ─── 6. Calculation Flow ─── -->
+<section>
+<h2><span class="num">6</span> Panchang Calculation Flow</h2>
+
+<div class="flow">
+<span class="node">computeDetailedPanchang</span>(date, lat, lon, tz, locale)
+  <span class="arrow">&#x2514;</span> <span class="dim">Resolve timezone</span> <span class="arrow">&#x2192;</span> IANA tz, <span class="dim">Julian Day</span> at local midnight
+  <span class="arrow">&#x2514;</span> <span class="dim">Rise/Set</span> <span class="arrow">&#x2192;</span> sunrise, sunset, moonrise, moonset, next_sunrise
+  <span class="arrow">&#x2514;</span> <span class="dim">Vara</span> <span class="arrow">&#x2192;</span> weekday from sunrise
+  <span class="arrow">&#x2514;</span> <span class="node">Five Limbs</span> in window [sunrise, next_sunrise)
+
+     <span class="arrow">&#x2514;</span> <span class="sub">Tithi</span> <span class="arrow">&#x2192;</span> (moon - sun) / 12&deg; with bisection boundaries
+     <span class="arrow">&#x2514;</span> <span class="sub">Nakshatra</span> <span class="arrow">&#x2192;</span> moon / 13.333&deg; with bisection
+     <span class="arrow">&#x2514;</span> <span class="sub">Yoga</span> <span class="arrow">&#x2192;</span> (sun + moon) / 13.333&deg;
+     <span class="arrow">&#x2514;</span> <span class="sub">Karana</span> <span class="arrow">&#x2192;</span> (moon - sun) / 6&deg;
+     <span class="arrow">&#x2514;</span> <span class="sub">Moon Sign</span> <span class="arrow">&#x2192;</span> moon / 30&deg;
+
+  <span class="arrow">&#x2514;</span> <span class="node">Inauspicious</span>
+     <span class="arrow">&#x2514;</span> Rahu Kalam / Yamaganda / Gulika <span class="dim">(8-segment day)</span>
+     <span class="arrow">&#x2514;</span> Dur Muhurtam, Bhadra, Varjyam
+  <span class="arrow">&#x2514;</span> <span class="node">Auspicious</span>
+     <span class="arrow">&#x2514;</span> Brahma / Abhijit / Vijay / Godhuli / Nishita
+     <span class="arrow">&#x2514;</span> Amrit Kalam, Siddhi Yogas
+  <span class="arrow">&#x2514;</span> <span class="node">Tyajyam</span> <span class="arrow">&#x2192;</span> nakshatra + tithi + vara + amritadi + lagna + karana + gowri + dosha + tithi-lagna + tamil-month
+  <span class="arrow">&#x2514;</span> <span class="node">Gowri / Hora / Nalla Neram</span>
+  <span class="arrow">&#x2514;</span> <span class="node">Calendars</span> <span class="arrow">&#x2192;</span> Shaka, Vikram, Kali, National, Tamil
+  <span class="arrow">&#x2514;</span> <span class="node">Locale resolution</span> <span class="arrow">&#x2192;</span> all named entities in requested language
+</div>
+</section>
+
+<!-- ─── 7. Chart Calculation Flow ─── -->
+<section>
+<h2><span class="num">7</span> Chart (Kundali) Calculation Flow</h2>
+
+<div class="flow">
+<span class="node">computeChart</span>(birthInfo, locale)
+  <span class="arrow">&#x2514;</span> <span class="dim">Parse inputs</span> <span class="arrow">&#x2192;</span> local time <span class="arrow">&#x2192;</span> UTC <span class="arrow">&#x2192;</span> Julian Day
+  <span class="arrow">&#x2514;</span> <span class="dim">Compute planets</span> <span class="arrow">&#x2192;</span> calc_ut for Sun..Pluto + Rahu (mean node)
+  <span class="arrow">&#x2514;</span> <span class="dim">Ketu</span> <span class="arrow">&#x2192;</span> Rahu + 180&deg;
+  <span class="arrow">&#x2514;</span> <span class="dim">Combustion</span> <span class="arrow">&#x2192;</span> within 5&deg; of Sun
+  <span class="arrow">&#x2514;</span> <span class="dim">Ascendant</span> <span class="arrow">&#x2192;</span> houses_ex with sidereal flag
+  <span class="arrow">&#x2514;</span> <span class="dim">Houses</span> <span class="arrow">&#x2192;</span> whole sign from ascendant
+  <span class="arrow">&#x2514;</span> <span class="node">Vargas (17 charts)</span>
+     <span class="arrow">&#x2514;</span> For each planet + varga: compute divisional sign + degree
+     <span class="arrow">&#x2514;</span> Build house map per varga (planets relative to div. ascendant)
+  <span class="arrow">&#x2514;</span> <span class="node">Dasha</span> <span class="arrow">&#x2192;</span> from Moon's nakshatra, balance at birth
+  <span class="arrow">&#x2514;</span> <span class="node">Ashtakavarga</span> <span class="arrow">&#x2192;</span> BAV + SAV from contributor rules
+  <span class="arrow">&#x2514;</span> <span class="node">Placements</span> <span class="arrow">&#x2192;</span> exaltation/debilitation/own_sign/moolatrikona/vargottama/digbala/pushkara/gandanta/neechabhanga/parivartana/graha-yuddha
+  <span class="arrow">&#x2514;</span> <span class="node">Jaimini</span> <span class="arrow">&#x2192;</span> 7 karakas (degree rank) + Karakamsa + Swamsa
+  <span class="arrow">&#x2514;</span> <span class="node">Friendships</span> <span class="arrow">&#x2192;</span> natural + temporal + composite (Panchadha)
+  <span class="arrow">&#x2514;</span> <span class="node">Aspects</span> <span class="arrow">&#x2192;</span> 7th + special, strength 0&ndash;100
+  <span class="arrow">&#x2514;</span> <span class="node">Kalsarpa</span> <span class="arrow">&#x2192;</span> all planets on one side of Rahu-Ketu axis
+</div>
+</section>
+
+<section>
+<h2><span class="num">8</span> Bisection Search Engine</h2>
+
+<p>
+  The <strong>single most critical algorithm</strong> &mdash; used by every sequence
+  generator (tithi, nakshatra, yoga, karana, moonsign, udaya lagna) to find
+  the exact moment an angle crosses a target degree.
+</p>
+
+<div class="code-block">
+<span class="cm">// Core algorithm: find JD when angleFn(jd) reaches targetDeg</span>
+<span class="kw">function</span> <span class="fn">findAngleTime</span>(
+  lo: <span class="ty">number</span>,           <span class="cm">// start JD</span>
+  hi: <span class="ty">number</span>,           <span class="cm">// end JD</span>
+  targetDeg: <span class="ty">number</span>,   <span class="cm">// target angle 0-360</span>
+  angleFn: <span class="ty">AngleFn</span>      <span class="cm">// (jd) =&gt; angle in degrees</span>
+): <span class="ty">number</span> | <span class="kw">null</span> {
+
+  <span class="kw">let</span> fLo = angleFn(lo);
+  <span class="kw">let</span> fHi = angleFn(hi);
+
+  <span class="cm">// Check for crossing considering 360&deg; wrap</span>
+  <span class="kw">const</span> wraps = <span class="built">Math</span>.floor((targetDeg + 360 - fLo) / 360);
+  <span class="kw">const</span> expected = <span class="built">Math</span>.floor((fHi + 360 - targetDeg) / 360);
+  <span class="kw">if</span> (expected &lt;= wraps) <span class="kw">return</span> <span class="kw">null</span>;  <span class="cm">// no crossing</span>
+
+  <span class="cm">// Binary search (~40 iterations, 1e-8 JD &asymp; 0.9ms)</span>
+  <span class="kw">for</span> (<span class="kw">let</span> i = <span class="num">0</span>; i &lt; <span class="num">40</span>; i++) {
+    <span class="kw">const</span> mid = (lo + hi) / <span class="num">2</span>;
+    <span class="kw">const</span> diff = normalizeDiff(targetDeg - angleFn(mid));
+    <span class="kw">if</span> (diff &gt; <span class="num">0</span>) lo = mid;
+    <span class="kw">else</span> hi = mid;
+    <span class="kw">if</span> (hi - lo &lt; <span class="num">1e-8</span>) <span class="kw">break</span>;
+  }
+  <span class="kw">return</span> (lo + hi) / <span class="num">2</span>;
+}
+
+<span class="cm">// Angle functions used:</span>
+<span class="cm">//   &quot;tithi&quot;:   (moon - sun) % 360</span>
+<span class="cm">//   &quot;moon&quot;:    moon % 360</span>
+<span class="cm">//   &quot;sun&quot;:     sun % 360</span>
+<span class="cm">//   &quot;yoga&quot;:    (sun + moon) % 360</span>
+</div>
+</section>
+
+<!-- ─── 9. Vargas ─── -->
+<section>
+<h2><span class="num">9</span> Vargas (Divisional Charts D1&ndash;D60)</h2>
+
+<p>Pure TypeScript &mdash; no Swiss Ephemeris needed once planetary longitudes are known.</p>
+
+<table>
+  <thead>
+    <tr><th>Varga</th><th>Parts/Sign</th><th>Rule</th><th>Significance</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>D1 (Rashi)</td><td>1</td><td>Same as sign</td><td>Physical Self / Body</td></tr>
+    <tr><td>D2 (Hora)</td><td>2</td><td>Odd:LiberateLeo/Cancer &mdash; even: reversal</td><td>Wealth</td></tr>
+    <tr><td>D3 (Drekkana)</td><td>3</td><td>Uniform + offset [0,4,8]</td><td>Siblings / Courage</td></tr>
+    <tr><td>D4 (Chaturthamsa)</td><td>4</td><td>Uniform + offset [0,3,6,9]</td><td>Fortunes / Home</td></tr>
+    <tr><td>D7 (Saptamsa)</td><td>7</td><td>Odd sign start; even signs start 6 signs ahead</td><td>Children</td></tr>
+    <tr><td><strong>D9 (Navamsa)</strong></td><td>9</td><td><code>(lon * 9) % 360 / 30</code></td><td>Spouse / Dharma</td></tr>
+    <tr><td>D10 (Dashamsa)</td><td>10</td><td>Odd sign start; even signs start 8 signs ahead</td><td>Career / Achievement</td></tr>
+    <tr><td>D11 (Rudramsa)</td><td>11</td><td>Anti-zodiacal count from Aries; parts run forward</td><td>Gains / Income</td></tr>
+    <tr><td>D12 (Dvadashamsa)</td><td>12</td><td>Uniform</td><td>Parents</td></tr>
+    <tr><td>D16 (Shodashamsa)</td><td>16</td><td>Movable&rarr;Aries, Fixed&rarr;Leo, Dual&rarr;Sag</td><td>Vehicles / Comforts</td></tr>
+    <tr><td>D20 (Vimshamsa)</td><td>20</td><td>Movable&rarr;Aries, Fixed&rarr;Sag, Dual&rarr;Leo</td><td>Spiritual Progress</td></tr>
+    <tr><td>D24 (Chaturvimshamsa)</td><td>24</td><td>Odd&rarr;Leo, Even&rarr;Cancer</td><td>Education / Learning</td></tr>
+    <tr><td>D27 (Nakshatramsa, Bhamsa)</td><td>27</td><td>Fire&rarr;Aries, Earth&rarr;Cancer, Air&rarr;Libra, Water&rarr;Cap</td><td>Strengths / Weaknesses</td></tr>
+    <tr><td><strong>D30 (Trimshamsa)</strong></td><td>5 <em>(uneven)</em></td><td><strong>Uneven segments</strong> &mdash; see below</td><td>Misfortunes</td></tr>
+    <tr><td>D40 (Khavedamsa)</td><td>40</td><td>Odd&rarr;Aries, Even&rarr;Libra</td><td>Maternal Legacy</td></tr>
+    <tr><td>D45 (Akshavedamsa)</td><td>45</td><td>Movable&rarr;Aries, Fixed&rarr;Leo, Dual&rarr;Sag</td><td>Paternal Legacy</td></tr>
+    <tr><td>D60 (Shashtyamsa)</td><td>60</td><td>Uniform (start from same sign)</td><td>Past-Life Karma</td></tr>
+  </tbody>
+</table>
+
+<h3>D30 Uneven Segments</h3>
+<table>
+  <thead>
+    <tr><th>Part</th><th>Odd Signs (Ar,Ge,Le,Li,Sg,Aq)</th><th>Even Signs (Ta,Cn,Vi,Sc,Cp,Pi)</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>0</td><td>0&ndash;5&deg; &rarr; Aries (Mars)</td><td>0&ndash;5&deg; &rarr; Taurus (Venus)</td></tr>
+    <tr><td>1</td><td>5&ndash;10&deg; &rarr; Aquarius (Saturn)</td><td>5&ndash;12&deg; &rarr; Virgo (Mercury)</td></tr>
+    <tr><td>2</td><td>10&ndash;18&deg; &rarr; Sagittarius (Jupiter)</td><td>12&ndash;20&deg; &rarr; Pisces (Jupiter)</td></tr>
+    <tr><td>3</td><td>18&ndash;25&deg; &rarr; Gemini (Mercury)</td><td>20&ndash;25&deg; &rarr; Capricorn (Saturn)</td></tr>
+    <tr><td>4</td><td>25&ndash;30&deg; &rarr; Libra (Venus)</td><td>25&ndash;30&deg; &rarr; Scorpio (Mars)</td></tr>
+  </tbody>
+</table>
+</section>
+
+<!-- ─── 10. Key Algorithms Summary ─── -->
+<section>
+<h2><span class="num">10</span> Key Algorithms Summary</h2>
+
+<table>
+  <thead>
+    <tr><th>Algorithm</th><th>Input</th><th>Formula</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Tithi</strong></td>
+      <td>Sun, Moon longitudes</td>
+      <td><code>floor((moonLon - sunLon) / 12) + 1</code> (1&ndash;30)</td>
+    </tr>
+    <tr>
+      <td><strong>Nakshatra</strong></td>
+      <td>Moon longitude</td>
+      <td><code>floor(moonLon / 13.333&hellip;)</code> (0&ndash;26)</td>
+    </tr>
+    <tr>
+      <td><strong>Yoga</strong></td>
+      <td>Sun + Moon longitudes</td>
+      <td><code>floor((sunLon + moonLon) / 13.333&hellip;)</code> (0&ndash;26)</td>
+    </tr>
+    <tr>
+      <td><strong>Karana</strong></td>
+      <td>Sun, Moon longitudes</td>
+      <td><code>floor((moonLon - sunLon) / 6)</code> (0&ndash;59)</td>
+    </tr>
+    <tr>
+      <td><strong>Nakshatra Pada</strong></td>
+      <td>Moon longitude</td>
+      <td><code>floor(degInNak / 3.333&hellip;) + 1</code> (1&ndash;4)</td>
+    </tr>
+    <tr>
+      <td><strong>Dasha balance</strong></td>
+      <td>Moon nakshatra, birth time</td>
+      <td><code>dashaYears * (1 - degInNak/13.333)</code></td>
+    </tr>
+    <tr>
+      <td><strong>Antardasha years</strong></td>
+      <td>MD years, AD lord</td>
+      <td><code>mdYears * dashaYears[adLord] / 120</code></td>
+    </tr>
+    <tr>
+      <td><strong>SAV (total)</strong></td>
+      <td>7 planet BAVs</td>
+      <td><code>&Sigma; BAV[planet][sign]</code></td>
+    </tr>
+    <tr>
+      <td><strong>Nalla Neram</strong></td>
+      <td>Day horas + inauspicious</td>
+      <td>Set subtraction (hora segments &minus; rahu/yama/gulika)</td>
+    </tr>
+  </tbody>
+</table>
+</section>
+
+<!-- ─── 11. Swiss Ephemeris Usage ─── -->
+<section>
+<h2><span class="num">11</span> Swiss Ephemeris Usage</h2>
+
+<p>
+  The only external dependency. <strong>Everything else is pure TypeScript.</strong>
+</p>
+
+<table>
+  <thead>
+    <tr><th>swisseph API</th><th>Used For</th><th>Called In</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>calc_ut()</code></td><td>Planetary longitudes, speeds</td><td>Panchang + Chart</td></tr>
+    <tr><td><code>houses_ex()</code></td><td>Ascendant + house cusps</td><td>Chart + Udaya Lagna</td></tr>
+    <tr><td><code>rise_trans()</code></td><td>Sunrise, sunset, moonrise, moonset</td><td>Panchang</td></tr>
+    <tr><td><code>julday()</code> / <code>revjul()</code></td><td>Gregorian &harr; Julian Day</td><td>Panchang + Chart</td></tr>
+    <tr><td><code>get_ayanamsa_ut()</code></td><td>Ayanamsa value at epoch</td><td>Panchang + Chart</td></tr>
+    <tr><td><code>set_sid_mode()</code></td><td>Select ayanamsa system</td><td>Init</td></tr>
+    <tr><td><code>sol_eclipse_when_glob()</code></td><td>Solar eclipse detection</td><td>Tyajyam (Dosha)</td></tr>
+    <tr><td><code>lun_eclipse_when()</code></td><td>Lunar eclipse detection</td><td>Tyajyam (Dosha)</td></tr>
+  </tbody>
+</table>
+</section>
+
+<!-- ─── 12. Response Shape Summary ─── -->
+<section>
+<h2><span class="num">12</span> Response Shape Summary</h2>
+
+<div class="code-block">
+<span class="cm">// PanchangResponse top-level keys:</span>
+{
+  date:            <span class="ty">string</span>            <span class="cm">// &quot;2026-07-04&quot;</span>
+  location:        <span class="ty">GeoLocation</span>
+  sun_moon:        <span class="ty">{ sunrise, sunset, moonrise, moonset, next_sunrise, dinaman_hours, ratriman_hours, madhyahna }</span>
+  vara:            <span class="ty">Vara</span>             <span class="cm">// weekday</span>
+  panchang:        <span class="ty">{ tithi, nakshatra, yoga, karana, *_sequence, paksha }</span>
+  rashi_nakshatra: <span class="ty">{ moonsign, moonsign_sequence, sunsign, surya_nakshatra, moon_nakshatra_padas }</span>
+  lunar_month:     <span class="ty">{ samvatsara_*, chandramasa_*, pravishte_day, nirayana_solar_month }</span>
+  ritu_ayana:      <span class="ty">{ drik_ritu, vedic_ritu, drik_ayana, vedic_ayana }</span>
+  auspicious_timings:    <span class="ty">{ brahma_muhurta, abhijit, vijay, godhuli, nishita, amrit_kalam, *siddhi_yoga }</span>
+  inauspicious_timings:  <span class="ty">{ rahu_kalam, yamaganda, gulika_kalam, dur_muhurtam, bhadra, varjyam }</span>
+  udaya_lagna:     <span class="ty">Array&lt;{ sign, rashi, start, end }&gt;</span>
+  chandrabalam:    <span class="ty">Chandrabalam</span>
+  tarabalam:       <span class="ty">Tarabalam</span>
+  shool_vasa:      <span class="ty">{ disha_shool, rahu_vasa, chandra_vasa }</span>
+  yogas_extra:     <span class="ty">{ ganda_mula, ravi_yoga }</span>
+  gowri_panchang: <span class="ty">GowriPanchanga</span>     <span class="cm">// 8+8 segments</span>
+  hora:            <span class="ty">Hora</span>              <span class="cm">// 12+12 planetary hours</span>
+  tyajyam:         <span class="ty">Tyajyam</span>           <span class="cm">// 10 inauspicious period types</span>
+  nalla_neram:     <span class="ty">TimeWindow[]</span>       <span class="cm">// auspicious horas</span>
+  tamil_calendar:  <span class="ty">TamilCalendar | null</span>
+  calendars:       <span class="ty">{ kali_year, julian_day, modified_julian_day, national_*_date }</span>
+}
+
+<span class="cm">// ChartResponse top-level keys:</span>
+{
+  birth:           <span class="ty">{ local_time, utc_time, timezone, julian_day, ayanamsa, ayanamsa_id, ayanamsa_label }</span>
+  ascendant:       <span class="ty">PlanetPosition</span>
+  planets_data:    <span class="ty">PlanetPosition[]</span>   <span class="cm">// 12 planets incl. Ketu</span>
+  d1_chart:        <span class="ty">VargaChart</span>         <span class="cm">// + d2_chart, d9_chart</span>
+  d1_asc_sign:     <span class="ty">string</span>            <span class="cm">// + d2_asc_sign, d9_asc_sign</span>
+  vargas:          <span class="ty">Record&lt;string, VargaChart&gt;</span>  <span class="cm">// d1..d60 (17 vargas)</span>
+  varga_order:     <span class="ty">number[]</span>
+  dasha:           <span class="ty">Mahadasha[]</span>        <span class="cm">// Vimshottari</span>
+  dasha_antar:     <span class="ty">Mahadasha[]</span>        <span class="cm">// nested antardashas</span>
+  karakas:         <span class="ty">Karaka[]</span>           <span class="cm">// 7 ranks</span>
+  karakamsa:       <span class="ty">string</span>             <span class="cm">// zodiac sign (legacy)</span>
+  swamsa:          <span class="ty">string</span>             <span class="cm">// zodiac sign (legacy)</span>
+  friendships:     <span class="ty">FriendshipTables</span>
+  kalsarpa:        <span class="ty">KalsarpaResult</span>
+  ashtakavarga:    <span class="ty">AshtakavargaResult</span>
+  drishti:         <span class="ty">AspectResult</span>
+}
+</div>
+</section>
+
+<!-- ─── 13. Testing ─── -->
+<section>
+<h2><span class="num">13</span> Testing</h2>
+
+<div class="stats">
+  <div class="stat-card">
+    <div class="number">~350</div>
+    <div class="label">Planned tests</div>
+  </div>
+  <div class="stat-card">
+    <div class="number">~309</div>
+    <div class="label">Backend pytest baseline</div>
+  </div>
+  <div class="stat-card">
+    <div class="number">&plusmn;60s</div>
+    <div class="label">Sunrise tolerance</div>
+  </div>
+  <div class="stat-card">
+    <div class="number">&plusmn;0.0001&deg;</div>
+    <div class="label">Planet position tolerance</div>
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr><th>Suite</th><th>Est. Tests</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>panchang</td><td>~80</td><td>Tithi/nak/yoga/karana for reference dates</td></tr>
+    <tr><td>vargas</td><td>~65</td><td>All 17 vargas, D30 special rules</td></tr>
+    <tr><td>dasha</td><td>~30</td><td>Mahadasha + antardasha proportions</td></tr>
+    <tr><td>ashtakavarga</td><td>~20</td><td>BAV point counts match reference</td></tr>
+    <tr><td>placements</td><td>~30</td><td>Exaltation/debilitation/vargottama/gandanta/graha yuddha</td></tr>
+    <tr><td>jaimini</td><td>~15</td><td>Karaka ranking, karakamsa structure</td></tr>
+    <tr><td>relationships</td><td>~20</td><td>Natural/temporal/composite matrices</td></tr>
+    <tr><td>aspects</td><td>~15</td><td>Standard + special aspects</td></tr>
+    <tr><td>kalsarpa</td><td>~10</td><td>Detection, type naming</td></tr>
+    <tr><td>tyajyam</td><td>~35</td><td>All 10 tyajyam types</td></tr>
+    <tr><td>gowri/hora</td><td>~20</td><td>Segment counts, cycle sequences</td></tr>
+    <tr><td>calendars</td><td>~15</td><td>Shaka/Vikram/Kali year calculations</td></tr>
+  </tbody>
+</table>
+
+<p><strong>Reference data:</strong> Kelowna (2018-06-01 to 2018-06-10), Ujjain, Alpharetta US (2026-07-04) &mdash; matching the backend test suite.</p>
+</section>
+
+<!-- ─── 14. Error Handling ─── -->
+<section>
+<h2><span class="num">14</span> Error Handling</h2>
+
+<p>Typed errors with <code>code</code> strings for programmatic handling:</p>
+
+<div class="code-block">
+<span class="kw">class</span> <span class="ty">PanchangError</span> <span class="kw">extends</span> <span class="ty">Error</span> {
+  <span class="kw">constructor</span>(
+    <span class="kw">public</span> code: <span class="str">'INVALID_DATE'</span> | <span class="str">'INVALID_LOCATION'</span>
+             | <span class="str">'CALCULATION_FAILED'</span> | <span class="str">'EPHEMERIS_ERROR'</span>,
+    detail: <span class="ty">string</span>
+  );
+}
+
+<span class="kw">class</span> <span class="ty">ChartError</span> <span class="kw">extends</span> <span class="ty">Error</span> {
+  <span class="kw">constructor</span>(
+    <span class="kw">public</span> code: <span class="str">'INVALID_BIRTH_INFO'</span> | <span class="str">'CALCULATION_FAILED'</span> | <span class="str">'EPHEMERIS_ERROR'</span>,
+    detail: <span class="ty">string</span>
+  );
+}
+</div>
+</section>
+
+<!-- ─── 15. Dependencies ─── -->
+<section>
+<h2><span class="num">15</span> Dependencies</h2>
+
+<div class="card">
+  <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+    <span class="tag green">Runtime</span>
+    <code style="font-size:1rem;">swisseph ^2.x</code>
+    <span style="color: var(--text-light);">Swiss Ephemeris (planetary positions, houses, rise/set, eclipses)</span>
+  </div>
+</div>
+<div class="card">
+  <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+    <span class="tag blue">Dev only</span>
+    <code>typescript, vitest, eslint, prettier</code>
+  </div>
+</div>
+
+<p style="margin-top:12px; font-size:0.88rem; color: var(--text-light);">
+  <strong>Zero runtime dependencies beyond swisseph.</strong> All calendar/astrological
+  calculations are pure TypeScript. The <code>timezone</code> parameter is optional &mdash;
+  if omitted, defaults to <code>"UTC"</code>. Unlike the Python backend, this library does
+  not bundle coordinate-to-timezone lookup. Users who need it should pass the IANA timezone
+  explicitly or provide it via <code>geo-tz</code>.
+</p>
+</section>
+
+<!-- ─── 16. LOC Estimates ─── -->
+<section>
+<h2><span class="num">16</span> Size Estimates</h2>
+
+<table>
+  <thead>
+    <tr><th>Layer</th><th>Files</th><th>Est. LOC</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Types</td><td>1</td><td>~300</td></tr>
+    <tr><td>Locales (3 languages)</td><td>3</td><td>~900</td></tr>
+    <tr><td>Constants (6 files)</td><td>6</td><td>~800</td></tr>
+    <tr><td>Ephemeris adapter</td><td>2</td><td>~150</td></tr>
+    <tr><td>Panchang calculations</td><td>~12</td><td>~1,200</td></tr>
+    <tr><td>Chart calculations</td><td>~10</td><td>~1,200</td></tr>
+    <tr><td>Tyajyam sub-module</td><td>10</td><td>~600</td></tr>
+    <tr><td>API orchestration</td><td>2</td><td>~300</td></tr>
+    <tr><td style="border-top:2px solid var(--border);"><strong>Core total</strong></td><td style="border-top:2px solid var(--border);"><strong>~42</strong></td><td style="border-top:2px solid var(--border);"><strong>~4,900</strong></td></tr>
+    <tr><td>Tests</td><td>~15</td><td>~3,000</td></tr>
+    <tr><td style="border-top:2px solid var(--border);"><strong>Grand total</strong></td><td style="border-top:2px solid var(--border);"><strong>~57</strong></td><td style="border-top:2px solid var(--border);"><strong>~7,900</strong></td></tr>
+  </tbody>
+</table>
+</section>
+
+<!-- ─── Footer ─── -->
+<hr style="border: none; border-top: 1px solid var(--border); margin: 48px 0 24px;">
+<p style="text-align: center; color: var(--text-light); font-size: 0.8rem;">
+  Vedic Panchanga JS Library &mdash; Design Document &mdash; 2026-07-05<br>
+  Port of <a href="https://vedicpanchanga.com">vedicpanchanga.com</a> Python backend to TypeScript &middot; swisseph &middot; Node.js 20+
+</p>
+
+</div>
+</body>
+</html>
