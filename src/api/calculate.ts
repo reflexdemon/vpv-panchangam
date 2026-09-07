@@ -93,7 +93,16 @@ export async function computeChart(
   locale: Locale = "en",
 ): Promise<ChartResponse> {
   const ephe = EphemerisService.getInstance();
-  if (!ephe.initialized) ephe.init();
+  if (!ephe.initialized) {
+    try {
+      await ephe.init();
+    } catch (err) {
+      throw new ChartError(
+        "EPHEMERIS_ERROR",
+        `Ephemeris initialization failed: ${String(err)}`,
+      );
+    }
+  }
 
   if (!birthInfo.date || !birthInfo.time) {
     throw new ChartError("INVALID_BIRTH_INFO", "date and time are required");

@@ -119,7 +119,16 @@ export async function computeDetailedPanchang(
   locale: Locale = "en",
 ): Promise<PanchangResponse> {
   const ephe = EphemerisService.getInstance();
-  if (!ephe.initialized) ephe.init();
+  if (!ephe.initialized) {
+    try {
+      await ephe.init();
+    } catch (err) {
+      throw new PanchangError(
+        "EPHEMERIS_ERROR",
+        `Ephemeris initialization failed: ${String(err)}`,
+      );
+    }
+  }
 
   // Validate inputs
   const dateStr = date ?? todayDate();

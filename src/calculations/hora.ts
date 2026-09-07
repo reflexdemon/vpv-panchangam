@@ -31,7 +31,7 @@ export function computeHora(
   for (let i = 0; i < 12; i++) {
     const name = HORA_CYCLE[(dayStart + i) % 7]!;
     const start = sunriseJd + i * dayDur;
-    const end = start + dayDur;
+    const end = sunriseJd + (i + 1) * dayDur;
     day.push({
       name,
       auspicious: AUSPICIOUS_HORAS.has(name),
@@ -44,7 +44,7 @@ export function computeHora(
   for (let i = 0; i < 12; i++) {
     const name = HORA_CYCLE[(nightStart + i) % 7]!;
     const start = sunsetJd + i * nightDur;
-    const end = start + nightDur;
+    const end = sunsetJd + (i + 1) * nightDur;
     night.push({
       name,
       auspicious: AUSPICIOUS_HORAS.has(name),
