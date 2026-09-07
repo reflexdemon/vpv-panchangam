@@ -1,7 +1,7 @@
 # Migrate ephemeris engine to `@swisseph/browser`
 
 Date: 2026-09-07
-Status: Approved design (pending spec review)
+Status: **Implemented** — Phase 2 complete. `NativeEphemeris` and the `swisseph` dependency are removed; `EphemerisService` is the browser (WASM) adapter. AGPL-3.0 notice and browser support documented in README.
 
 ## Goal
 

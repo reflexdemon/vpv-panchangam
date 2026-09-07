@@ -1,6 +1,6 @@
 # vedic-panchanga
 
-A complete Vedic Panchanga and Kundali (birth chart) calculator for Node.js, written in TypeScript. Uses the [Swiss Ephemeris](https://www.astro.com/swisseph/) (`swisseph` npm package) for astronomical calculations and pure TypeScript for all astrological logic.
+A complete Vedic Panchanga and Kundali (birth chart) calculator for Node.js and browsers, written in TypeScript. Uses the Swiss Ephemeris via [`@swisseph/browser`](https://www.npmjs.com/package/@swisseph/browser) (WebAssembly) for astronomical calculations and pure TypeScript for all astrological logic.
 
 ## Features
 
@@ -24,14 +24,22 @@ A complete Vedic Panchanga and Kundali (birth chart) calculator for Node.js, wri
 
 ## Requirements
 
-- Node.js 20+
-- A C++ build environment for `swisseph` native addon (included automatically via `npm install`)
+- Node.js 20+ (Node only; browsers are also supported)
 
 ## Installation
 
 ```bash
 npm install vedic-panchanga
 ```
+
+The astronomical engine ships as a WebAssembly module inside `@swisseph/browser`; no native C++ build step is required. In browsers the engine is loaded automatically; in Node.js a small `fetch` shim is installed on first use to serve the bundled `.wasm`.
+
+## Browser usage
+
+The package is compiled to CommonJS with a dynamic `import()` of the ESM-only
+`@swisseph/browser` package, so it also works in bundlers that support
+dynamic imports (Vite, webpack, Rollup …). WASM loading follows the standard
+`@swisseph/browser` path — no extra configuration needed.
 
 ## Quick Start
 
@@ -127,16 +135,21 @@ Throws `ChartError` with codes: `INVALID_BIRTH_INFO`, `CALCULATION_FAILED`, `EPH
 
 ## Configuration
 
-### Ephemeris path
+### Ephemeris engine
 
-By default, `swisseph` uses its bundled ephemeris data. For extended date ranges or higher precision, provide a path to a full ephemeris directory:
+The engine is `@swisseph/browser` (WebAssembly). `init()` is async and should be
+awaited once before calling the calculation functions (the public `compute*`
+functions auto-initialize):
 
 ```typescript
 import { EphemerisService } from 'vedic-panchanga';
 
 const ephe = EphemerisService.getInstance();
-ephe.init('/path/to/ephe', 'lahiri');
+await ephe.init({ ayanamsa: 'lahiri' }); // default
 ```
+
+If you never call `init()` yourself, `computeDetailedPanchang()` / `computeChart()`
+initialize the engine (with the default `lahiri` ayanamsa) on first use.
 
 ### Timezone
 
@@ -169,7 +182,7 @@ src/
 ├── types.ts               # All TypeScript interfaces + error classes
 ├── locales/               # en, hi, ta locale tables
 ├── constants/             # Lookup tables (BAV rules, dashas, muhurta tables, etc.)
-├── ephemeris/             # Swiss Ephemeris adapter (swisseph 0.5.x wrapper)
+├── ephemeris/             # Swiss Ephemeris adapter (@swisseph/browser WASM wrapper)
 ├── calculations/          # Pure calculation modules
 │   ├── bisection.ts       # Angular boundary search engine
 │   ├── panchang.ts        # Tithi/nakshatra/yoga/karana index + sequence generators
@@ -206,4 +219,4 @@ npm run test:watch   # Watch mode
 
 ## License
 
-MIT
+MIT, aside from the bundled Swiss Ephemeris. `@swisseph/browser` (and the Swiss Ephemeris `swisseph.wasm` sidecar) is distributed under the [AGPL-3.0 license](https://www.gnu.org/licenses/agpl-3.0.html) by Astrodienst. If you use this package in a server or network service, the Swiss Ephemeris AGPL terms may apply to your distribution.

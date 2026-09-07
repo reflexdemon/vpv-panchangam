@@ -1,10 +1,8 @@
 // Shared ephemeris types and constant definitions.
-// SE values are numeric literals matching swisseph (native) and @swisseph/browser.
+// SE values are numeric literals matching @swisseph/browser.
 
 import type { AyanamsaId } from "../types";
 import { AYANAMSA_MAP } from "../constants/planets";
-
-export type EngineId = "native" | "browser";
 
 export interface CalcResult {
   lon: number;
@@ -20,8 +18,6 @@ export interface HousesResult {
 }
 
 export interface EphemerisInitOptions {
-  engine?: EngineId;
-  ephePath?: string;
   ayanamsa?: AyanamsaId;
 }
 
@@ -55,7 +51,7 @@ export const SE = {
 export interface IEphemeris {
   readonly initialized: boolean;
 
-  /** Initialize the engine. May be synchronous (native) or async (browser). */
+  /** Initialize the engine (async for the WASM browser engine). */
   init(options?: EphemerisInitOptions): void | Promise<void>;
 
   /** Set the ayanamsa mode used for sidereal calculations. */

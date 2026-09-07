@@ -1,26 +1,19 @@
-// Ephemeris facade — selects between the native addon and the WASM browser engine.
-// The engine is chosen at init() time (default: 'native' during migration,
-// 'browser' once the native addon is removed).
+// Ephemeris service — browser (WebAssembly) engine.
+// Wraps @swisseph/browser behind the same synchronous calculation API the
+// calculation layer has always used. init() is async (WASM + module load).
 
 import type { AyanamsaId } from "../types";
 import type {
   CalcResult,
-  EngineId,
   EphemerisInitOptions,
   HousesResult,
   IEphemeris,
 } from "./types";
 import { SE } from "./types";
-import { NativeEphemeris } from "./native";
+import { BrowserEphemeris } from "./browser";
 
 export { SE };
-export type {
-  CalcResult,
-  HousesResult,
-  EngineId,
-  IEphemeris,
-  EphemerisInitOptions,
-};
+export type { CalcResult, HousesResult, IEphemeris, EphemerisInitOptions };
 
 export class EphemerisService {
   private static _instance: EphemerisService;
@@ -28,7 +21,7 @@ export class EphemerisService {
   private _initialized = false;
 
   private constructor() {
-    this._ephe = new NativeEphemeris();
+    this._ephe = new BrowserEphemeris();
   }
 
   static getInstance(): EphemerisService {
@@ -44,25 +37,12 @@ export class EphemerisService {
   }
 
   /**
-   * Initialize the ephemeris service.
-   * @param options.engine   Which engine to use ('native' default for now).
-   * @param options.ephePath Optional path to ephemeris data files.
+   * Initialize the ephemeris service (loads the @swisseph/browser WASM engine).
    * @param options.ayanamsa Default ayanamsa (defaults to 'lahiri').
    */
   async init(options: EphemerisInitOptions = {}): Promise<void> {
     if (this._initialized) return;
-    const engine: EngineId = options.engine ?? "native";
-
-    if (engine === "browser") {
-      const { BrowserEphemeris } = await import("./browser");
-      this._ephe = new BrowserEphemeris();
-    } else {
-      this._ephe = new NativeEphemeris();
-    }
-    await this._ephe.init({
-      ephePath: options.ephePath,
-      ayanamsa: options.ayanamsa,
-    });
+    await this._ephe.init({ ayanamsa: options.ayanamsa });
     this._initialized = true;
   }
 

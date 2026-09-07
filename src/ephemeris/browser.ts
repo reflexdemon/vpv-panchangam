@@ -32,6 +32,20 @@ export type ModuleLoader = (specifier: string) => Promise<any>;
 
 const dynamicImport = new Function("s", "return import(s)") as ModuleLoader;
 
+/** Default loader: Function-constructed import() for the CommonJS build, with a
+ *  fallback to a static `import()` when running under a module runner (vitest)
+ *  that cannot hand an import callback to a Function-scoped dynamic import. */
+async function defaultModuleLoader(specifier: string): Promise<any> {
+  try {
+    return await dynamicImport(specifier);
+  } catch {
+    if (typeof process !== "undefined" && process.env?.VITEST) {
+      return import(specifier);
+    }
+    throw new Error(`Failed to load module ${specifier}`);
+  }
+}
+
 const EARTH_RADIUS_KM = 6378.137;
 const AU_KM = 149597870.7;
 const ALT0_SUN = -0.8333; // naut. refraction + solar radius
@@ -137,7 +151,7 @@ export class BrowserEphemeris implements IEphemeris {
   private _initialized = false;
   private _loader: ModuleLoader;
 
-  constructor(loader: ModuleLoader = dynamicImport) {
+  constructor(loader: ModuleLoader = defaultModuleLoader) {
     this._loader = loader;
   }
 
