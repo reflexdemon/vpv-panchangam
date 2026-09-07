@@ -22,9 +22,15 @@ import type {
 } from "./types";
 import { ayanamsaToSiderealMode, SE } from "./types";
 
-const dynamicImport = new Function("s", "return import(s)") as (
-  s: string,
-) => Promise<any>;
+/** Loader for the ESM-only @swisseph/browser package.
+ *  Must be `import()` (not require): when the library is compiled to CommonJS,
+ *  tsc rewrites `import()` to `require()`, which breaks ESM-only packages, so
+ *  we invoke the native dynamic import through a Function constructor instead.
+ *  Test environments (vitest's module runner) can pass a loader that resolves
+ *  through their own import hook. */
+export type ModuleLoader = (specifier: string) => Promise<any>;
+
+const dynamicImport = new Function("s", "return import(s)") as ModuleLoader;
 
 const EARTH_RADIUS_KM = 6378.137;
 const AU_KM = 149597870.7;
@@ -129,6 +135,11 @@ function computeTransit(
 export class BrowserEphemeris implements IEphemeris {
   private _swe: any;
   private _initialized = false;
+  private _loader: ModuleLoader;
+
+  constructor(loader: ModuleLoader = dynamicImport) {
+    this._loader = loader;
+  }
 
   init(options?: EphemerisInitOptions): Promise<void> {
     return this._init(options).then(() => {
@@ -138,7 +149,7 @@ export class BrowserEphemeris implements IEphemeris {
 
   private async _init(options?: EphemerisInitOptions): Promise<void> {
     installNodeFetchShim();
-    const mod = await dynamicImport("@swisseph/browser");
+    const mod = await this._loader("@swisseph/browser");
     this._swe = new mod.SwissEphemeris();
     await this._swe.init();
     this.setAyanamsa(options?.ayanamsa ?? "lahiri");
