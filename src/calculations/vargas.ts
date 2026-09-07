@@ -20,7 +20,7 @@ import type { VargaChart, VargaNumber } from "../types";
  * @param varga      Divisional number (1, 2, 3, ..., 60)
  */
 export function vargaSign(longitude: number, varga: number): number {
-  const norm = ((longitude % 360) + 360) % 360;
+  const norm = longitude >= 0 && longitude < 360 ? longitude : ((longitude % 360) + 360) % 360;
   const signId = Math.floor(norm / 30) + 1; // 1-12
   const degInSign = norm - (signId - 1) * 30; // 0-30
 
