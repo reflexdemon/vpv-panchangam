@@ -1,7 +1,7 @@
 import { beforeAll } from "vitest";
 import { EphemerisService } from "../src/ephemeris";
 
-beforeAll(() => {
+beforeAll(async () => {
   const ephe = EphemerisService.getInstance();
-  ephe.init();
+  await ephe.init();
 });
