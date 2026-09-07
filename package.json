@@ -4,15 +4,27 @@
   "description": "Vedic Panchanga and Kundali calculator for Node.js",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist/"],
+  "files": [
+    "dist/"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint src/",
     "format": "prettier --write src/ test/",
-    "format:check": "prettier --check src/ test/"
+    "format:check": "prettier --check src/ test/",
+    "prepublishOnly": "npm run build"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/reflexdemon/vpv-panchangam.git"
+  },
+  "bugs": {
+    "url": "https://github.com/reflexdemon/vpv-panchangam/issues"
+  },
+  "homepage": "https://github.com/reflexdemon/vpv-panchangam#readme",
   "keywords": [
     "vedic",
     "panchang",
@@ -35,6 +47,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
+    "@vitest/coverage-v8": "^2.1.9",
     "eslint": "^9.0.0",
     "prettier": "^3.3.0",
     "typescript": "^5.5.0",
