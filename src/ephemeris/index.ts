@@ -19,6 +19,7 @@ export class EphemerisService {
   private static _instance: EphemerisService;
   private _ephe: IEphemeris;
   private _initialized = false;
+  private _initPromise: Promise<void> | null = null;
 
   private constructor() {
     this._ephe = new BrowserEphemeris();
@@ -38,12 +39,24 @@ export class EphemerisService {
 
   /**
    * Initialize the ephemeris service (loads the @swisseph/browser WASM engine).
+   * Concurrent init() calls share the same in-flight initialization; a failure
+   * clears it so a later init() attempt can retry.
    * @param options.ayanamsa Default ayanamsa (defaults to 'lahiri').
    */
-  async init(options: EphemerisInitOptions = {}): Promise<void> {
-    if (this._initialized) return;
-    await this._ephe.init({ ayanamsa: options.ayanamsa });
-    this._initialized = true;
+  init(options: EphemerisInitOptions = {}): Promise<void> {
+    if (this._initialized) return Promise.resolve();
+    if (!this._initPromise) {
+      this._initPromise = Promise.resolve(
+        this._ephe.init({ ayanamsa: options.ayanamsa }),
+      )
+        .then(() => {
+          this._initialized = true;
+        })
+        .finally(() => {
+          this._initPromise = null;
+        });
+    }
+    return this._initPromise!;
   }
 
   get initialized(): boolean {

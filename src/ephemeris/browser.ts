@@ -1,17 +1,12 @@
 // WASM browser ephemeris adapter — wraps @swisseph/browser.
 // init() is async: the ESM module and its WASM sidecar are fetched lazily.
 //
-// Note on Node + CJS: tsc (module commonjs) rewrites `import()` into `require()`,
-// which fails for this ESM-only package. We load it through a raw dynamic import
-// (`new Function("s", "return import(s)")`) so the emitted code keeps a real
-// `import()` that Node, bundlers, and browsers can all resolve.
-//
-// In Node the WASM sidecar resolves to a `file:` URL, and Node's built-in fetch
-// cannot handle `file:` — so we install a one-time shim that serves the bytes.
+// Node-only helpers (a fetch shim importing node:fs / node:url) are loaded
+// lazily inside installNodeFetchShim() after confirming a Node runtime, so no
+// node:* specifier is ever evaluated in a browser or statically pulled into the
+// bundle. In Node the WASM sidecar resolves to a `file:` URL, and Node's built-in
+// fetch cannot handle `file:` — hence the one-time shim that serves the bytes.
 // In browsers the module loads its own WASM from its import.meta URL directly.
-
-import { readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
 
 import type { AyanamsaId } from "../types";
 import type {
@@ -30,33 +25,67 @@ import { ayanamsaToSiderealMode, SE } from "./types";
  *  through their own import hook. */
 export type ModuleLoader = (specifier: string) => Promise<any>;
 
-const dynamicImport = new Function("s", "return import(s)") as ModuleLoader;
+/** Last-resort `import()` that survives the CommonJS compile step (tsc turns a
+ *  literal `import()` into `require()`, which refuses ESM-only packages on Node
+ *  versions without require(esm)). Constructed lazily and only ever called after
+ *  the static import paths have failed, so CSP-governed browsers — which reject
+ *  `new Function` outright — never evaluate it. */
+let dynamicImport: ModuleLoader | null = null;
+function fallbackImport(specifier: string): Promise<any> {
+  if (!dynamicImport) {
+    dynamicImport = new Function("s", "return import(s)") as ModuleLoader;
+  }
+  return dynamicImport(specifier);
+}
 
-/** Default loader: Function-constructed import() for the CommonJS build, with a
- *  fallback to a static `import()` when running under a module runner (vitest)
- *  that cannot hand an import callback to a Function-scoped dynamic import. */
-async function defaultModuleLoader(specifier: string): Promise<any> {
+/** Default loader, in preference order:
+ *  1. A literal, statically-discoverable dynamic `import()` — the path browsers,
+ *     bundlers, ESM runtimes, and Node ≥22.12 (require(esm)) take.
+ *  2. The same literal dynamic import resolved through vitest's module runner.
+ *  3. Only when the library was compiled to CommonJS on an older Node does the
+ *     Function-created dynamic import above take over. */
+async function defaultModuleLoader(): Promise<any> {
   try {
-    return await dynamicImport(specifier);
+    return await import("@swisseph/browser");
   } catch {
     if (typeof process !== "undefined" && process.env?.VITEST) {
-      return import(specifier);
+      return import("@swisseph/browser");
     }
-    throw new Error(`Failed to load module ${specifier}`);
+    return fallbackImport("@swisseph/browser");
   }
 }
 
 const EARTH_RADIUS_KM = 6378.137;
+const EARTH_RADIUS_M = 6378140; // for horizon-dip at observer elevation
 const AU_KM = 149597870.7;
 const ALT0_SUN = -0.8333; // naut. refraction + solar radius
 const ALT0_MOON = -0.5667 - 0.2583; // refraction + lunar radius complement
 
+/** Normalize an angle into [0, 360). */
+function norm360(x: number): number {
+  return ((x % 360) + 360) % 360;
+}
+
+/** Angular depression of the horizon (deg) for an observer at altitude (m). */
+function horizonDip(altitudeM: number): number {
+  if (!(altitudeM > 0)) return 0;
+  return (
+    (Math.acos(EARTH_RADIUS_M / (EARTH_RADIUS_M + altitudeM)) * 180) / Math.PI
+  );
+}
+
 let fetchShimInstalled = false;
 
-/** In Node, teach fetch to serve file: URLs (the WASM sidecar loads this way). */
-function installNodeFetchShim(): void {
+/** In Node, teach fetch to serve file: URLs (the WASM sidecar loads this way).
+ *  The node:* modules are imported lazily, only after confirming a Node
+ *  runtime, so the browser path never evaluates a static node: import. */
+async function installNodeFetchShim(): Promise<void> {
   if (fetchShimInstalled) return;
   if (typeof process === "undefined" || !process.versions?.node) return;
+  const [{ readFile }, { fileURLToPath }] = await Promise.all([
+    import("node:fs/promises"),
+    import("node:url"),
+  ]);
   fetchShimInstalled = true;
   const realFetch = globalThis.fetch;
   globalThis.fetch = async (input: any, init?: any) => {
@@ -113,7 +142,8 @@ function computeTransit(
   which: number,
 ): number | null {
   const [lon, lat] = geopos;
-  const alt0 = body === SE.MOON ? ALT0_MOON : ALT0_SUN;
+  const alt0 =
+    (body === SE.MOON ? ALT0_MOON : ALT0_SUN) - horizonDip(geopos[2]);
   const wantRise = which === SE.CALC_RISE;
   const win = 1.7; // max hours between consecutive rise/set events
   const step = 0.02;
@@ -149,6 +179,7 @@ function computeTransit(
 export class BrowserEphemeris implements IEphemeris {
   private _swe: any;
   private _initialized = false;
+  private _initPromise: Promise<void> | null = null;
   private _loader: ModuleLoader;
 
   constructor(loader: ModuleLoader = defaultModuleLoader) {
@@ -156,13 +187,23 @@ export class BrowserEphemeris implements IEphemeris {
   }
 
   init(options?: EphemerisInitOptions): Promise<void> {
-    return this._init(options).then(() => {
-      this._initialized = true;
-    });
+    if (this._initialized) return Promise.resolve();
+    if (!this._initPromise) {
+      // Share one in-flight initialization among concurrent callers; a failure
+      // clears it so a later init() attempt can retry.
+      this._initPromise = this._init(options)
+        .then(() => {
+          this._initialized = true;
+        })
+        .finally(() => {
+          this._initPromise = null;
+        });
+    }
+    return this._initPromise;
   }
 
   private async _init(options?: EphemerisInitOptions): Promise<void> {
-    installNodeFetchShim();
+    await installNodeFetchShim();
     const mod = await this._loader("@swisseph/browser");
     this._swe = new mod.SwissEphemeris();
     await this._swe.init();
@@ -232,11 +273,12 @@ export class BrowserEphemeris implements IEphemeris {
     let ascendant = r.ascendant as number;
     let mc = r.mc as number;
     if (f & SE.FLG_SIDEREAL) {
-      // ayanamsa at this JD; subtraction yields mean-lahiri sidereal values.
+      // ayanamsa at this JD; subtraction yields mean-lahiri sidereal values,
+      // wrapped into [0, 360) so cusps/asc/mc never come out negative.
       const ay = this._swe.getAyanamsaExUt(jd, SE.FLG_SWIEPH | SE.FLG_SIDEREAL);
-      for (let i = 1; i <= 12; i++) cusps[i] = cusps[i] - ay;
-      ascendant = ascendant - ay;
-      mc = mc - ay;
+      for (let i = 1; i <= 12; i++) cusps[i] = norm360(cusps[i] - ay);
+      ascendant = norm360(ascendant - ay);
+      mc = norm360(mc - ay);
     }
     return { cusps, ascendant, mc };
   }

@@ -7,9 +7,12 @@
  * now that the native adapter has been removed.
  */
 
-import { describe, expect, it, beforeAll } from "vitest";
+import { describe, expect, it, beforeAll, vi } from "vitest";
 import { BrowserEphemeris } from "../src/ephemeris/browser";
 import { SE } from "../src/ephemeris/types";
+import { EphemerisService } from "../src/ephemeris";
+import { computeChart } from "../src/api/calculate";
+import { computeDetailedPanchang } from "../src/api/get-panchang";
 import { KELOWNA, UJJAIN, ALPHARETTA, approxEqual } from "./helpers";
 
 const UJ = { name: "Ujjain", lat: UJJAIN.latitude, lon: UJJAIN.longitude };
@@ -166,5 +169,110 @@ describe("browser ephemeris", () => {
     expect(s).not.toBeNull();
     const l = browser.lunEclipseWhen(jd);
     expect(l).not.toBeNull();
+  });
+
+  it("dedupes concurrent init() calls", async () => {
+    let loads = 0;
+    class StubSwe {
+      async init(): Promise<void> {}
+      setSiderealMode(): void {}
+    }
+    const countingLoader = (s: string) => {
+      loads++;
+      return Promise.resolve({ SwissEphemeris: StubSwe });
+    };
+    const b = new BrowserEphemeris(countingLoader);
+    await Promise.all([b.init(), b.init(), b.init()]);
+    expect(loads).toBe(1);
+    expect(b.initialized).toBe(true);
+  });
+
+  it("EphemerisService.init() dedupes concurrent calls", async () => {
+    EphemerisService.destroy();
+    const spy = vi
+      .spyOn(BrowserEphemeris.prototype, "init")
+      .mockResolvedValue(undefined);
+    const svc = EphemerisService.getInstance();
+    await Promise.all([svc.init(), svc.init(), svc.init()]);
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(svc.initialized).toBe(true);
+    spy.mockRestore();
+    EphemerisService.destroy();
+  });
+
+  it("rise/set honors observer elevation (horizon dip)", () => {
+    const jdMid = browser.julday(2018, 6, 1, 12) - 0.5;
+    const sr0 = browser.riseTrans(
+      jdMid,
+      SE.SUN,
+      [UJ.lon, UJ.lat, 0],
+      SE.CALC_RISE,
+    );
+    const sr1 = browser.riseTrans(
+      jdMid,
+      SE.SUN,
+      [UJ.lon, UJ.lat, 1000],
+      SE.CALC_RISE,
+    );
+    expect(sr0).not.toBeNull();
+    expect(sr1).not.toBeNull();
+    expect(sr1!).toBeLessThan(sr0!);
+    const ss0 = browser.riseTrans(
+      sr0!,
+      SE.SUN,
+      [UJ.lon, UJ.lat, 0],
+      SE.CALC_SET,
+    );
+    const ss1 = browser.riseTrans(
+      sr1!,
+      SE.SUN,
+      [UJ.lon, UJ.lat, 1000],
+      SE.CALC_SET,
+    );
+    expect(ss0).not.toBeNull();
+    expect(ss1).not.toBeNull();
+    expect(ss1!).toBeGreaterThan(ss0!);
+  });
+
+  it("sidereal houses stay in [0,360) across the ayanamsa wrap", () => {
+    const jd = browser.julday(2018, 9, 20, 12);
+    const h = browser.housesEx(jd, UJ.lat, UJ.lon, "P");
+    for (let i = 1; i <= 12; i++) {
+      expect(h.cusps[i]).toBeGreaterThanOrEqual(0);
+      expect(h.cusps[i]).toBeLessThan(360);
+    }
+    expect(h.ascendant).toBeGreaterThanOrEqual(0);
+    expect(h.ascendant).toBeLessThan(360);
+    expect(h.mc).toBeGreaterThanOrEqual(0);
+    expect(h.mc).toBeLessThan(360);
+    expect(h.cusps[2]).toBeCloseTo(354.5, 0); // pre-fix this was -5.5
+  });
+
+  it("maps inner ephemeris init failure to ChartError EPHEMERIS_ERROR", async () => {
+    EphemerisService.destroy();
+    const ephe = EphemerisService.getInstance();
+    const spy = vi.spyOn(ephe, "init").mockRejectedValueOnce(new Error("boom"));
+    await expect(
+      computeChart({
+        date: "2018-06-01",
+        time: "12:00",
+        latitude: UJ.lat,
+        longitude: UJ.lon,
+        timezone: "Asia/Kolkata",
+      }),
+    ).rejects.toMatchObject({ name: "ChartError", code: "EPHEMERIS_ERROR" });
+    spy.mockRestore();
+    EphemerisService.destroy();
+  });
+
+  it("maps inner ephemeris init failure to PanchangError EPHEMERIS_ERROR", async () => {
+    EphemerisService.destroy();
+    const ephe = EphemerisService.getInstance();
+    const spy = vi.spyOn(ephe, "init").mockRejectedValueOnce(new Error("boom"));
+    await expect(
+      computeDetailedPanchang("2018-06-01", UJ.lat, UJ.lon, "Asia/Kolkata"),
+    ).rejects.toMatchObject({ name: "PanchangError", code: "EPHEMERIS_ERROR" });
+    spy.mockRestore();
+    EphemerisService.destroy();
   });
 });
