@@ -15,7 +15,9 @@
     "lint": "eslint src/",
     "format": "prettier --write src/ test/",
     "format:check": "prettier --check src/ test/",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "bump:major": "npm version major",
+    "bump:minor": "npm version minor"
   },
   "repository": {
     "type": "git",
