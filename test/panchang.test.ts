@@ -18,9 +18,9 @@ describe("panchang limb indices", () => {
   let sunLon: number;
   let moonLon: number;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     ephe = EphemerisService.getInstance();
-    ephe.init();
+    await ephe.init();
     // 2018-06-01 12:00 UT
     jd = ephe.julday(2018, 6, 1, 12);
     const flags = SE.FLG_SWIEPH | SE.FLG_SPEED | SE.FLG_SIDEREAL;
