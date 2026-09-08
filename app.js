@@ -238,9 +238,13 @@
     ring.setAttribute("cx", cx); ring.setAttribute("cy", cy); ring.setAttribute("r", R_ANN);
     svg.appendChild(ring);
 
-    var base = document.createElementNS(NS, "path");
+    var base = document.createElementNS(NS, "g");
     base.setAttribute("class", "arc-neutral");
-    base.setAttribute("d", clockArcPath(cx, cy, R_ARC0, R_ARC1, 0, 1));
+    [0, 0.5].forEach(function (f0) {
+      var p = document.createElementNS(NS, "path");
+      p.setAttribute("d", clockArcPath(cx, cy, R_ARC0, R_ARC1, f0, f0 + 0.5));
+      base.appendChild(p);
+    });
     svg.appendChild(base);
 
     (opts.zones || []).forEach(function (z) {
@@ -322,18 +326,30 @@
       dot.setAttribute("cx", cx); dot.setAttribute("cy", cy);
       dot.setAttribute("r", 7);
       svg.appendChild(dot);
+      var n0 = nowInTz();
+      if (n0) {
+        var frac0 = (n0.h * 3600 + n0.min * 60 + n0.s) / 86400;
+        hand.setAttribute("transform", "rotate(" + (frac0 * 360 - 90).toFixed(3) + " " + cx + " " + cy + ")");
+        nowTxt.textContent = String(n0.h).padStart(2, "0") + ":" + String(n0.min).padStart(2, "0") + ":" + String(n0.s).padStart(2, "0");
+      }
     }
     startClockNow();
     return svg;
   }
 
   var clockNowTimer = null;
+  var clockNowFmt = null;
+  var clockNowTz = null;
   function nowInTz() {
     try {
-      var s = new Intl.DateTimeFormat("en", {
-        timeZone: state.tz, hourCycle: "h23",
-        hour: "2-digit", minute: "2-digit", second: "2-digit",
-      }).format(new Date());
+      if (state.tz !== clockNowTz) {
+        clockNowTz = state.tz;
+        clockNowFmt = new Intl.DateTimeFormat("en", {
+          timeZone: state.tz, hourCycle: "h23",
+          hour: "2-digit", minute: "2-digit", second: "2-digit",
+        });
+      }
+      var s = clockNowFmt.format(new Date());
       var mm = /^(\d{1,2}):(\d{1,2}):(\d{1,2})/.exec(s);
       return mm ? { h: Number(mm[1]), min: Number(mm[2]), s: Number(mm[3]) } : null;
     } catch (e) { return null; }
