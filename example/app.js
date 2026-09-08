@@ -136,6 +136,16 @@
     return (new Date(iso).getTime() - localMidnightMs()) / 60000;
   }
 
+  // invert dMin → ISO, for formatting strip-chart tooltips as real datetimes
+  function dMinToIso(m) {
+    return new Date(localMidnightMs() + m * 60000).toISOString();
+  }
+
+  // format a strip-chart tooltip coordinate (minutes since local midnight)
+  function fmtDMin(m) {
+    return fmtTzAuto(dMinToIso(m));
+  }
+
   var DUR_YEAR_ON = { year: "numeric", month: "short", day: "2-digit" };
   var DUR_TIME_ON = { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false };
 
@@ -631,8 +641,8 @@
       return { start: dMin(s.start), end: dMin(s.end), label: s.name + (s.auspicious ? " (good)" : " (avoid)"), good: s.auspicious };
     });
     if (echarts) {
-      renderStrip(day, daySegs, { fmt: fmtTzAuto, rowLabel: "Day" });
-      renderStrip(night, nightSegs, { fmt: fmtTzAuto, rowLabel: "Night" });
+      renderStrip(day, daySegs, { fmt: fmtDMin, rowLabel: "Day" });
+      renderStrip(night, nightSegs, { fmt: fmtDMin, rowLabel: "Night" });
     }
 
     var legend = el("div", "legend");
@@ -662,10 +672,10 @@
     var nSegs = hora.night.map(function (s) {
       return { start: dMin(s.start), end: dMin(s.end), label: s.name + (s.auspicious ? " (good)" : " (avoid)"), good: s.auspicious };
     });
-    if (echarts) renderStrip(day, dSegs, { fmt: fmtTzAuto, rowLabel: "Day" });
+    if (echarts) renderStrip(day, dSegs, { fmt: fmtDMin, rowLabel: "Day" });
     box.appendChild(el("div", "sep", "Hora for the night"));
     box.appendChild(night);
-    if (echarts) renderStrip(night, nSegs, { fmt: fmtTzAuto, rowLabel: "Night" });
+    if (echarts) renderStrip(night, nSegs, { fmt: fmtDMin, rowLabel: "Night" });
     var legend = el("div", "legend");
     legend.appendChild(chip("good", "good hora"));
     legend.appendChild(chip("bad", "avoiding hora"));
@@ -680,7 +690,7 @@
     var segs = windows.map(function (w) {
       return { start: dMin(w.start), end: dMin(w.end), label: "Nalla Neram", good: true };
     });
-    if (echarts) renderStrip(host, segs, { fmt: fmtTzAuto, rowLabel: "Good" });
+    if (echarts) renderStrip(host, segs, { fmt: fmtDMin, rowLabel: "Good" });
     box.appendChild(
       table(
         ["Nalla Neram (good time)", "From", "To"],
@@ -774,7 +784,7 @@
         return s.start != null && s.end != null;
       });
 
-    if (echarts && segs.length) renderStrip(host, segs, { fmt: fmtTzAuto, rowLabel: "Day" });
+    if (echarts && segs.length) renderStrip(host, segs, { fmt: fmtDMin, rowLabel: "Day" });
     else box.appendChild(el("p", "hint", "No windows computed for this day."));
 
     var legend = el("div", "legend");
@@ -1109,7 +1119,7 @@
       var title = vc.name + " (D" + d + ")";
       card.appendChild(el("div", "varga-title", title));
       card.appendChild(el("div", "varga-sub", vc.subtitle || ""));
-      card.appendChild(siGrid(vc, {}));
+      card.appendChild(siGrid(vc));
       box.appendChild(card);
     });
     section(view, "Divisional charts (D1 ⇄ D60)", box, panelSnippet(chartCall(), "c.vargas, c.varga_order"));
@@ -1138,8 +1148,10 @@
             type: "bar",
             data: vals,
             itemStyle: {
+              // per-planet BAV is a 0–8 sum (one point max per contributor
+              // sign), so classify on that scale: ≥5 strong, 3–4 moderate.
               color: function (pp) {
-                return pp.value >= 30 ? "#2e7d32" : pp.value >= 25 ? "#ef6c00" : "#c62828";
+                return pp.value >= 5 ? "#2e7d32" : pp.value >= 3 ? "#ef6c00" : "#c62828";
               },
             },
             label: { show: true, position: "top", fontSize: 9 },
@@ -1207,10 +1219,14 @@
       )
     );
 
-    // current mahadasha's antardashas
+    // current mahadasha's antardashas — looked up in the enriched `antar`
+    // array (computeChart stores plain periods in `dasha` and the
+    // antardasha-enriched copy in `dasha_antar`); fall back to the plain
+    // array when the enriched one is empty.
     var now = new Date();
+    var enriched = (antar && antar.length) ? antar : dasha;
     var current = null;
-    dasha.forEach(function (m) {
+    enriched.forEach(function (m) {
       var s = new Date(m.start).getTime();
       var e = new Date(m.end).getTime();
       if (now.getTime() >= s && now.getTime() < e) current = m;
@@ -1218,7 +1234,7 @@
 
     if (current) {
       box.appendChild(el("div", "sep", "Antardashas of " + current.lord + " (current mahadasha)"));
-      if (current.antardashas) {
+      if (current.antardashas && current.antardashas.length) {
         box.appendChild(
           table(
             ["Antardasha", "Start", "End", "Years"],
@@ -1227,18 +1243,8 @@
             })
           )
         );
-        var first = current.antardashas[0];
-        if (first && first.pratyantars) {
-          box.appendChild(el("div", "sep", "Pratyantardashas of current antardasha (" + first.lord + ")"));
-          box.appendChild(
-            table(
-              ["Pratyantar", "Start", "End", "Years"],
-              first.pratyantars.map(function (p) {
-                return [p.lord, fmtTz(p.start, true), fmtTz(p.end, true), p.years];
-              })
-            )
-          );
-        }
+      } else {
+        box.appendChild(el("p", "hint", "No antardashas returned for the current mahadasha."));
       }
     }
 
@@ -1323,7 +1329,7 @@
     box.appendChild(el("div", "sep", "Aspect edges"));
     box.appendChild(
       table(
-        ["From", "→", "Offset", "Type", "Strength", "Benefic"],
+        ["From", "", "To", "Offset", "Type", "Strength", "Benefic"],
         d.aspects.map(function (a) {
           return [
             a.planet_abbr + " (" + a.from_sign + ")",
@@ -1417,15 +1423,23 @@
     else renderKundali();
   }
 
+  // per-view request generations: stale async renders discard their result so
+  // a fast "Apply" / tab switch can never be overwritten by an older compute
+  var panchangGen = 0;
+  var kundaliGen = 0;
+
   async function renderPanchang() {
     var view = $("#panchang-view");
+    var gen = ++panchangGen;
     clear(view);
     view.appendChild(el("p", "hint", "Computing panchang…"));
     try {
       var p = await vpv.computeDetailedPanchang(state.date, state.lat, state.lon, state.tz, state.locale);
+      if (gen !== panchangGen) return; // superseded by a newer request
       hideBanner();
       renderedPanchang(p);
     } catch (e) {
+      if (gen !== panchangGen) return;
       banner(labelError(e), e.detail || e.message || String(e));
       clear(view);
     }
@@ -1433,6 +1447,7 @@
 
   async function renderKundali() {
     var view = $("#kundali-view");
+    var gen = ++kundaliGen;
     clear(view);
     view.appendChild(el("p", "hint", "Casting chart…"));
     try {
@@ -1447,9 +1462,11 @@
         },
         state.locale
       );
+      if (gen !== kundaliGen) return; // superseded by a newer request
       hideBanner();
       renderedKundali(c);
     } catch (e) {
+      if (gen !== kundaliGen) return;
       banner(labelError(e), e.detail || e.message || String(e));
       clear(view);
     }
