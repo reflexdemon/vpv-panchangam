@@ -369,11 +369,133 @@
     });
     var t = String(n.h).padStart(2, "0") + ":" + String(n.min).padStart(2, "0") + ":" + String(n.s).padStart(2, "0");
     document.querySelectorAll(".clock-now-time").forEach(function (el2) { el2.textContent = t; });
+    document.querySelectorAll(".tl-now").forEach(function (ln) {
+      var x0 = Number(ln.getAttribute("data-x0")), x1 = Number(ln.getAttribute("data-x1"));
+      var x = x0 + frac * (x1 - x0);
+      ln.setAttribute("x1", x.toFixed(2));
+      ln.setAttribute("x2", x.toFixed(2));
+    });
+    document.querySelectorAll(".tl-now-time").forEach(function (el2) { el2.textContent = t; });
   }
   function startClockNow() {
     if (clockNowTimer) return;
     stepClockNow();
     clockNowTimer = setInterval(stepClockNow, 1000);
+  }
+
+  // ── 24h muhurta timeline (pure SVG, no ECharts) ────────────────────────
+
+  // build segment rects for a band, handling midnight wrap
+  function timelineSeg(g, start, end, good, label) {
+    var PLOT_L = 118, PLOT_R = 990, PLOT_W = PLOT_R - PLOT_L;
+    var emit = function (s, e) {
+      s = Math.max(0, Math.min(1440, s));
+      e = Math.max(0, Math.min(1440, e));
+      var x = PLOT_L + (s / 1440) * PLOT_W;
+      var w = (PLOT_L + (e / 1440) * PLOT_W) - x;
+      if (w <= 0) return;
+      var seg = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      var tip = document.createElementNS("http://www.w3.org/2000/svg", "title");
+      tip.textContent = label + " · " + fmtDMin(s) + "–" + fmtDMin(e);
+      seg.appendChild(tip);
+      var r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      r.setAttribute("class", good ? "seg-good" : "seg-bad");
+      r.setAttribute("x", x.toFixed(2));
+      r.setAttribute("rx", 3);
+      r.setAttribute("width", w.toFixed(2));
+      seg.appendChild(r);
+      g.appendChild(seg);
+    };
+    if (start > end) {
+      emit(0, end);
+      emit(start, 1440);
+    } else {
+      emit(start, end);
+    }
+  }
+
+  function timelineBar(opts) {
+    opts = opts || {};
+    var NS = "http://www.w3.org/2000/svg";
+    var PLOT_L = 118, PLOT_R = 990, PLOT_W = PLOT_R - PLOT_L;
+    var ROW_Y = 40, ROW_H = 44, BAND_H = 24;
+    var svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("class", "timeline");
+    svg.setAttribute("viewBox", "0 0 1000 340");
+
+    var bandTop = ROW_Y - (BAND_H / 2);
+
+    var nowTxt = document.createElementNS(NS, "text");
+    nowTxt.setAttribute("class", "tl-now-time");
+    nowTxt.setAttribute("x", 500);
+    nowTxt.setAttribute("y", ROW_Y - 12);
+    nowTxt.textContent = "--:--:--";
+    svg.appendChild(nowTxt);
+
+    for (var h = 0; h < 24; h++) {
+      var x = PLOT_L + (h / 24) * PLOT_W;
+      var tk = document.createElementNS(NS, "line");
+      tk.setAttribute("class", "tl-tick");
+      tk.setAttribute("x1", x.toFixed(2)); tk.setAttribute("y1", bandTop);
+      tk.setAttribute("x2", x.toFixed(2)); tk.setAttribute("y2", bandTop + (opts.bands ? opts.bands.length : 0) * ROW_H);
+      svg.appendChild(tk);
+      var lb = document.createElementNS(NS, "text");
+      lb.setAttribute("class", "tl-hlabel");
+      lb.setAttribute("x", x.toFixed(2));
+      lb.setAttribute("y", bandTop + (opts.bands ? opts.bands.length : 0) * ROW_H + 22);
+      lb.textContent = String(h).padStart(2, "0");
+      svg.appendChild(lb);
+    }
+    for (var hm = 0; hm < 48; hm++) {
+      var xm = PLOT_L + ((hm + 0.5) / 48) * PLOT_W;
+      var mk = document.createElementNS(NS, "line");
+      mk.setAttribute("class", "tl-half");
+      mk.setAttribute("x1", xm.toFixed(2)); mk.setAttribute("y1", bandTop);
+      mk.setAttribute("x2", xm.toFixed(2)); mk.setAttribute("y2", bandTop + (opts.bands ? opts.bands.length : 0) * ROW_H);
+      svg.appendChild(mk);
+    }
+
+    (opts.bands || []).forEach(function (band, bi) {
+      var y = ROW_Y + bi * ROW_H;
+      var lbl = document.createElementNS(NS, "text");
+      lbl.setAttribute("class", "tl-band-label");
+      lbl.setAttribute("x", 8);
+      lbl.setAttribute("y", y + 4);
+      lbl.setAttribute("text-anchor", "start");
+      lbl.textContent = band.label;
+      svg.appendChild(lbl);
+      var pg = document.createElementNS(NS, "g");
+      band.segments.forEach(function (s) {
+        timelineSeg(pg, s.start, s.end, s.good, s.label);
+      });
+      pg.childNodes.forEach(function (segG) {
+        segG.querySelector("rect").setAttribute("y", y - BAND_H / 2);
+        segG.querySelector("rect").setAttribute("height", BAND_H);
+      });
+      svg.appendChild(pg);
+    });
+
+    if (opts.showNow) {
+      var now = document.createElementNS(NS, "line");
+      now.setAttribute("class", "tl-now");
+      now.setAttribute("data-x0", PLOT_L);
+      now.setAttribute("data-x1", PLOT_R);
+      var bandH = (opts.bands ? opts.bands.length : 0) * ROW_H;
+      now.setAttribute("y1", bandTop);
+      now.setAttribute("y2", bandTop + bandH);
+      var n0 = nowInTz();
+      if (n0) {
+        var frac0 = (n0.h * 3600 + n0.min * 60 + n0.s) / 86400;
+        var x0 = PLOT_L + frac0 * PLOT_W;
+        now.setAttribute("x1", x0.toFixed(2));
+        now.setAttribute("x2", x0.toFixed(2));
+        nowTxt.textContent = String(n0.h).padStart(2, "0") + ":" + String(n0.min).padStart(2, "0") + ":" + String(n0.s).padStart(2, "0");
+      }
+      svg.appendChild(now);
+    }
+
+    startClockNow();
+    return svg;
   }
 
   // Generic horizontal time strip built from { start, end, label, good } (numerical x units)
@@ -950,50 +1072,82 @@
 
   function renderDayGlance(view, p) {
     var box = el("div");
-    var host = chartEl();
-    box.appendChild(host);
-    var items = [];
 
+    var toSeg = function (it) {
+      var start = dMin(it.start), end = dMin(it.end);
+      if (start == null || end == null) return null;
+      return { label: it.label, start: start, end: end, good: it.good };
+    };
+    var bands = [];
     ["brahma_muhurta", "pratah_sandhya", "abhijit", "vijay_muhurta", "godhuli_muhurta", "sayahna_sandhya", "nishita_muhurta"].forEach(function (k) {
       var w = p.auspicious_timings[k];
-      if (w) items.push(kv(w, k.replace(/_/g, " "), true));
+      if (w) bands.push({ label: k.replace(/_/g, " "), segments: [toSeg({ start: w.start, end: w.end, good: true, label: k.replace(/_/g, " ") })].filter(Boolean) });
     });
+    var yogas = [];
+    ["amrit_kalam", "sarvartha_siddhi_yoga", "amrita_siddhi_yoga"].forEach(function (k) {
+      p.auspicious_timings[k].forEach(function (w) {
+        var s = toSeg({ start: w.start, end: w.end, good: true, label: k.replace(/_/g, " ") });
+        if (s) yogas.push(s);
+      });
+    });
+    var gowri = [];
+    ["day", "night"].forEach(function (part) {
+      p.gowri_panchang[part].forEach(function (s) {
+        var lab = s.name + (part === "night" ? " (night)" : "");
+        var seg = toSeg({ start: s.start, end: s.end, good: s.auspicious, label: lab });
+        if (seg) gowri.push(seg);
+      });
+    });
+    var hora = [];
+    p.hora.day.forEach(function (s) {
+      var seg = toSeg({ start: s.start, end: s.end, good: s.auspicious, label: s.name });
+      if (seg) hora.push(seg);
+    });
+    p.hora.night.forEach(function (s) {
+      var seg = toSeg({ start: s.start, end: s.end, good: s.auspicious, label: s.name + " hora (night)" });
+      if (seg) hora.push(seg);
+    });
+    var nalla = [];
+    p.nalla_neram.forEach(function (w) {
+      var seg = toSeg({ start: w.start, end: w.end, good: true, label: "Nalla Neram" });
+      if (seg) nalla.push(seg);
+    });
+    var inausp = [];
     ["rahu_kalam", "yamaganda", "gulika_kalam"].forEach(function (k) {
       var w = p.inauspicious_timings[k];
-      if (w) items.push(kv(w, k.replace(/_/g, " "), false));
+      if (w) { var seg = toSeg({ start: w.start, end: w.end, good: false, label: k.replace(/_/g, " ") }); if (seg) inausp.push(seg); }
     });
-    p.auspicious_timings.amrit_kalam.forEach(function (w) { items.push(kv(w, "Amrit Kalam", true)); });
-    p.auspicious_timings.sarvartha_siddhi_yoga.forEach(function (w) { items.push(kv(w, "Sarvartha Siddhi", true)); });
-    p.auspicious_timings.amrita_siddhi_yoga.forEach(function (w) { items.push(kv(w, "Amrita Siddhi", true)); });
-    p.inauspicious_timings.dur_muhurtam.forEach(function (w) { items.push(kv(w, "Durmuhurtam", false)); });
-    p.inauspicious_timings.bhadra.forEach(function (w) { items.push(kv(w, "Bhadra", false)); });
-    p.inauspicious_timings.varjyam.forEach(function (w) { items.push(kv(w, "Varjyam", false)); });
-    p.gowri_panchang.day.forEach(function (s) { items.push(kv(s, s.name, s.auspicious)); });
-    p.gowri_panchang.night.forEach(function (s) { items.push(kv(s, s.name + " (night)", s.auspicious)); });
-    p.hora.day.forEach(function (s) { items.push(kv(s, s.name + " hora", s.auspicious)); });
-    p.hora.night.forEach(function (s) { items.push(kv(s, s.name + " hora (night)", s.auspicious)); });
-    p.nalla_neram.forEach(function (w) { items.push(kv(w, "Nalla Neram", true)); });
-
-    var segs = items
-      .map(function (it) {
-        return { start: dMin(it.start), end: dMin(it.end), label: it.label, good: it.good };
-      })
-      .filter(function (s) {
-        return s.start != null && s.end != null;
+    ["dur_muhurtam", "bhadra", "varjyam"].forEach(function (k) {
+      p.inauspicious_timings[k].forEach(function (w) {
+        var seg = toSeg({ start: w.start, end: w.end, good: false, label: k.replace(/_/g, " ") });
+        if (seg) inausp.push(seg);
       });
+    });
 
-    if (echarts && segs.length) renderStrip(host, segs, { fmt: fmtDMin, rowLabel: "Day" });
-    else box.appendChild(el("p", "hint", "No windows computed for this day."));
+    var segCount = bands.reduce(function (n, b) { return n + b.segments.length; }, 0) +
+      yogas.length + gowri.length + hora.length + nalla.length + inausp.length;
+
+    if (segCount) {
+      box.appendChild(timelineBar({
+        showNow: true,
+        bands: [
+          { label: "Muhurtas", segments: bands.reduce(function (a, b) { return a.concat(b.segments); }, []) },
+          { label: "Yogas", segments: yogas },
+          { label: "Gowri Panchang", segments: gowri },
+          { label: "Hora", segments: hora },
+          { label: "Nalla Neram", segments: nalla },
+          { label: "Inauspicious", segments: inausp },
+        ],
+      }));
+    } else {
+      box.appendChild(el("p", "hint", "No windows computed for this day."));
+    }
 
     var legend = el("div", "legend");
     legend.appendChild(chip("good", "auspicious"));
     legend.appendChild(chip("bad", "inauspicious"));
     box.appendChild(legend);
     section(view, "Day at a glance — all muhurta windows", box, panelSnippet(panchangCall(), "p.auspicious_timings + p.inauspicious_timings + p.gowri_panchang + p.hora + p.nalla_neram"), { auspicious_timings: p.auspicious_timings, inauspicious_timings: p.inauspicious_timings, gowri_panchang: p.gowri_panchang, hora: p.hora, nalla_neram: p.nalla_neram });
-  }
-
-  function kv(w, label, good) {
-    return { start: w.start, end: w.end, label: label, good: good };
   }
 
   // ───────────────────────────── kundali renderer ─────────────────────────
