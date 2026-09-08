@@ -501,7 +501,7 @@
       "sub",
       "Vara " + p.vara.sanskrit + " (" + p.vara.english + ") • " + p.panchang.paksha
     ));
-    section(view, "Panchang overview", head, panchangCall());
+    section(view, "Panchang overview", head, panchangCall(), p.panchang);
 
     // 2 — sun & moon
     section(
@@ -535,7 +535,8 @@
           ["Paksha", p.panchang.paksha],
         ]
       ),
-      panelSnippet(panchangCall(), "p.vara, p.panchang.paksha")
+      panelSnippet(panchangCall(), "p.vara, p.panchang.paksha"),
+      { vara: p.vara, paksha: p.panchang.paksha }
     );
 
     // 4 — panchang (tithi / nakshatra / yoga / karana)
@@ -551,7 +552,7 @@
         ]
       )
     );
-    section(view, "Panchang (now)", pc, panelSnippet(panchangCall(), "p.panchang.tithi, p.panchang.nakshatra, p.panchang.yoga, p.panchang.karana"));
+    section(view, "Panchang (now)", pc, panelSnippet(panchangCall(), "p.panchang.tithi, p.panchang.nakshatra, p.panchang.yoga, p.panchang.karana"), p.panchang);
 
     ["tithi", "nakshatra", "yoga", "karana"].forEach(function (kind) {
       var seq = p.panchang[kind + "_sequence"].slice(0, 5);
@@ -569,7 +570,8 @@
             ];
           })
         ),
-        panelSnippet(panchangCall(), "p.panchang." + kind + "_sequence")
+        panelSnippet(panchangCall(), "p.panchang." + kind + "_sequence"),
+        p.panchang[kind + "_sequence"]
       );
     });
 
@@ -589,7 +591,8 @@
       view,
       "Rashi & Nakshatra",
       table(["Item", "Value", "Detail"], rnRows),
-      panelSnippet(panchangCall(), "p.rashi_nakshatra.sunsign, p.rashi_nakshatra.moon_nakshatra_padas")
+      panelSnippet(panchangCall(), "p.rashi_nakshatra.sunsign, p.rashi_nakshatra.moon_nakshatra_padas"),
+      p.rashi_nakshatra
     );
 
     // 6 — calendars
@@ -627,7 +630,8 @@
       view,
       "Calendars",
       table(["Item", "Value"], calRows),
-      panelSnippet(panchangCall(), "p.lunar_month, p.calendars, p.tamil_calendar")
+      panelSnippet(panchangCall(), "p.lunar_month, p.calendars, p.tamil_calendar"),
+      { lunar_month: p.lunar_month, calendars: p.calendars, tamil_calendar: p.tamil_calendar }
     );
 
     // 7 — ritu & ayana
@@ -641,7 +645,8 @@
           ["Vedic tropical", p.ritu_ayana.vedic_ritu, p.ritu_ayana.vedic_ayana],
         ]
       ),
-      panelSnippet(panchangCall(), "p.ritu_ayana")
+      panelSnippet(panchangCall(), "p.ritu_ayana"),
+      p.ritu_ayana
     );
 
     // 8 — auspicious timings
@@ -667,7 +672,8 @@
       view,
       "Auspicious timings",
       table(["Muhurta", "From", "To"], auRows),
-      panelSnippet(panchangCall(), "p.auspicious_timings")
+      panelSnippet(panchangCall(), "p.auspicious_timings"),
+      p.auspicious_timings
     );
 
     // 9 — inauspicious timings
@@ -689,7 +695,8 @@
       view,
       "Inauspicious timings",
       table(["Avoid", "From", "To"], iaRows),
-      panelSnippet(panchangCall(), "p.inauspicious_timings")
+      panelSnippet(panchangCall(), "p.inauspicious_timings"),
+      p.inauspicious_timings
     );
 
     // 10 — udaya lagna
@@ -702,7 +709,8 @@
           return [u.sign, u.rashi, fmtTzAuto(u.start), fmtTzAuto(u.end)];
         })
       ),
-      panelSnippet(panchangCall(), "p.udaya_lagna")
+      panelSnippet(panchangCall(), "p.udaya_lagna"),
+      p.udaya_lagna
     );
 
     // 11 — chandrabalam & tarabalam
@@ -723,7 +731,7 @@
         })
       )
     );
-    section(view, "Chandrabalam & Tarabalam", bal, panelSnippet(panchangCall(), "p.chandrabalam, p.tarabalam"));
+    section(view, "Chandrabalam & Tarabalam", bal, panelSnippet(panchangCall(), "p.chandrabalam, p.tarabalam"), { chandrabalam: p.chandrabalam, tarabalam: p.tarabalam });
 
     // 12 — shool & vasa
     section(
@@ -737,7 +745,8 @@
           ["Chandra Vasa", p.shool_vasa.chandra_vasa],
         ]
       ),
-      panelSnippet(panchangCall(), "p.shool_vasa")
+      panelSnippet(panchangCall(), "p.shool_vasa"),
+      p.shool_vasa
     );
 
     // 13 — yogas extra
@@ -761,7 +770,7 @@
         ]
       )
     );
-    section(view, "Ganda Mula & Ravi Yoga", ye, panelSnippet(panchangCall(), "p.yogas_extra"));
+    section(view, "Ganda Mula & Ravi Yoga", ye, panelSnippet(panchangCall(), "p.yogas_extra"), p.yogas_extra);
 
     // 14 — gowri panchangam
     renderGowri(view, p.gowri_panchang);
@@ -825,7 +834,8 @@
       view,
       "Gowri Panchangam",
       box,
-      panelSnippet(panchangCall(), 'p.gowri_panchang.day  // 8 segments: ' + order)
+      panelSnippet(panchangCall(), 'p.gowri_panchang.day  // 8 segments: ' + order),
+      gowri
     );
   }
 
@@ -915,7 +925,7 @@
     box.appendChild(
       table(["Avoid during", "From", "To"], rows.length ? rows : [["—", "—", "—"]])
     );
-    section(view, "Tyajyam (avoiding periods)", box, panelSnippet(panchangCall(), "p.tyajyam"));
+    section(view, "Tyajyam (avoiding periods)", box, panelSnippet(panchangCall(), "p.tyajyam"), t);
   }
 
   function renderDayGlance(view, p) {
@@ -959,7 +969,7 @@
     legend.appendChild(chip("good", "auspicious"));
     legend.appendChild(chip("bad", "inauspicious"));
     box.appendChild(legend);
-    section(view, "Day at a glance — all muhurta windows", box, panelSnippet(panchangCall(), "p.auspicious_timings + p.inauspicious_timings + p.gowri_panchang + p.hora + p.nalla_neram"));
+    section(view, "Day at a glance — all muhurta windows", box, panelSnippet(panchangCall(), "p.auspicious_timings + p.inauspicious_timings + p.gowri_panchang + p.hora + p.nalla_neram"), { auspicious_timings: p.auspicious_timings, inauspicious_timings: p.inauspicious_timings, gowri_panchang: p.gowri_panchang, hora: p.hora, nalla_neram: p.nalla_neram });
   }
 
   function kv(w, label, good) {
