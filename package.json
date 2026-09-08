@@ -16,6 +16,9 @@
     "format": "prettier --write src/ test/",
     "format:check": "prettier --check src/ test/",
     "prepublishOnly": "npm run build",
+    "example:build": "esbuild example/entry.ts --bundle --format=esm --platform=browser --outfile=example/dist/vpv-demo.mjs --external:node:* && node scripts/copy-demo-wasm.cjs",
+    "demo": "npm run example:build && node example/serve.js",
+    "demo:watch": "node scripts/copy-demo-wasm.cjs && (esbuild example/entry.ts --bundle --format=esm --platform=browser --outfile=example/dist/vpv-demo.mjs --external:node:* --watch & node example/serve.js)",
     "bump:major": "npm version major",
     "bump:minor": "npm version minor"
   },
@@ -50,6 +53,7 @@
   "devDependencies": {
     "@types/node": "^20.14.0",
     "@vitest/coverage-v8": "^2.1.9",
+    "esbuild": "^0.21.5",
     "eslint": "^9.0.0",
     "prettier": "^3.3.0",
     "typescript": "^5.5.0",

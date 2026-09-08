@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>vpv-panchangam — interactive demo</title>
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/styles/github.min.css"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/languages/typescript.min.js"></script>
+  <style>
+    :root {
+      --bg: #f6f8fa;
+      --panel: #ffffff;
+      --ink: #1f2328;
+      --muted: #59636e;
+      --line: #d8dee4;
+      --accent: #0969da;
+      --good: #2e7d32;
+      --bad: #c62828;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.5;
+    }
+    header.top {
+      background: #0d1117;
+      color: #f0f6fc;
+      padding: 18px 24px;
+    }
+    header.top h1 { margin: 0; font-size: 20px; }
+    header.top .tag { color: #9da7b3; font-size: 13px; margin-top: 2px; }
+    .controls {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      padding: 10px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: flex-end;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+    .field { display: flex; flex-direction: column; font-size: 12px; color: var(--muted); }
+    .field input, .field select {
+      margin-top: 2px;
+      padding: 5px 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      font-size: 13px;
+      background: #fff;
+      color: var(--ink);
+    }
+    button {
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #fff;
+      padding: 6px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .tabs {
+      padding: 8px 24px 0;
+      display: flex;
+      gap: 8px;
+      background: var(--bg);
+    }
+    .tabs button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 8px 8px 0 0;
+    }
+    .tabs button.active {
+      background: var(--bg);
+      color: var(--accent);
+      border-bottom-color: var(--bg);
+      box-shadow: inset 0 -2px 0 var(--accent);
+    }
+    .view { padding: 16px 24px 48px; max-width: 1080px; margin: 0 auto; }
+    .hidden { display: none; }
+    #error-banner {
+      display: none;
+      margin: 12px 24px 0;
+      padding: 12px 16px;
+      border: 1px solid #f0b429;
+      background: #fff8e1;
+      border-radius: 8px;
+      color: #7a4a01;
+    }
+    #error-banner.visible { display: block; }
+    .hint { color: var(--muted); font-style: italic; }
+    .hero h2 { margin: 4px 0; }
+    .hero .sub { color: var(--muted); margin: 2px 0; font-size: 14px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin: 16px 0;
+    }
+    .section-title { margin: 0 0 12px; font-size: 16px; }
+    .sep { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; margin: 14px 0 6px; }
+    .data-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    .data-table th, .data-table td {
+      text-align: left;
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    .data-table th { background: #f6f8fa; font-weight: 600; }
+    .data-table tr.alt td { background: #fcfcfd; }
+    .chip {
+      display: inline-block;
+      padding: 1px 8px;
+      margin: 1px 2px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .chip.good, .chip.g { background: #e6f4ea; color: var(--good); }
+    .chip.bad, .chip.e { background: #fdecea; color: var(--bad); }
+    .chip.info { background: #e7f1fb; color: var(--accent); }
+    .chip.planet { background: #0d1117; color: #f0f6fc; }
+    .chip.f { background: #e3f2fd; color: #1565c0; }
+    .chip.ge { background: #fce4ec; color: #880e4f; }
+    .chip.n { background: #eceff1; color: #455a64; }
+    .legend { display: flex; gap: 10px; margin-top: 8px; }
+    .chart-host { width: 100%; height: 120px; }
+    .hli { display: block; }
+    pre.code-block {
+      background: #f6f8fa;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      overflow-x: auto;
+      font-size: 12px;
+      margin: 12px 0 0;
+    }
+    pre.code-block code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: transparent; }
+    .si-grid { display: table; border-spacing: 3px; width: 100%; max-width: 640px; }
+    .si-row { display: table-row; }
+    .si-cell { display: table-cell; width: 25%; height: 62px; border: 1px solid var(--line); border-radius: 6px; background: #fff; vertical-align: top; padding: 3px 6px; }
+    .si-cell.si-fill { background: #fbfcfe; }
+    .si-cell.si-asc { outline: 2px solid var(--accent); background: #eef7ff; }
+    .si-sign { display: flex; justify-content: space-between; align-items: baseline; }
+    .si-sign-name { font-size: 11px; font-weight: 700; color: var(--muted); }
+    .si-planets { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 2px; }
+    .si-planet {
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
+      border-radius: 4px;
+      padding: 0 4px;
+      letter-spacing: 0.03em;
+    }
+    .si-footer { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .si-asc-mark { color: var(--accent); }
+    .vargas-wrap { display: flex; flex-wrap: wrap; gap: 16px; }
+    .varga-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      width: 250px;
+    }
+    .varga-title { font-weight: 700; font-size: 13px; }
+    .varga-sub { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+    footer { padding: 20px 24px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <h1>vpv-panchangam — interactive demo</h1>
+    <div class="tag">
+      Every feature of the library, driven from the browser build. Exact-input
+      TypeScript snippets are shown next to each feature.
+    </div>
+  </header>
+
+  <form class="controls" id="controls" onsubmit="return false">
+    <div class="field">
+      <label for="f-date">Date</label>
+      <input type="date" id="f-date" />
+    </div>
+    <div class="field">
+      <label for="f-time">Time (chart only)</label>
+      <input type="time" id="f-time" step="60" />
+    </div>
+    <div class="field">
+      <label for="f-lat">Latitude</label>
+      <input type="number" id="f-lat" step="any" />
+    </div>
+    <div class="field">
+      <label for="f-lon">Longitude</label>
+      <input type="number" id="f-lon" step="any" />
+    </div>
+    <div class="field">
+      <label for="f-tz">Timezone</label>
+      <select id="f-tz">
+        <option>Asia/Kolkata</option>
+        <option>Asia/Kathmandu</option>
+        <option>Asia/Dhaka</option>
+        <option>Asia/Tokyo</option>
+        <option>Australia/Sydney</option>
+        <option>Europe/London</option>
+        <option>Europe/Paris</option>
+        <option>America/New_York</option>
+        <option>America/Chicago</option>
+        <option>America/Denver</option>
+        <option>America/Los_Angeles</option>
+        <option>UTC</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="f-ayanamsa">Ayanamsa</label>
+      <select id="f-ayanamsa">
+        <option value="lahiri">Lahiri (Chitra-paksha)</option>
+        <option value="kp_new">KP (New)</option>
+        <option value="kp_old">KP (Old)</option>
+        <option value="raman">Raman</option>
+        <option value="kp_khullar">KP Khullar</option>
+        <option value="sayan">Sayana (tropical)</option>
+        <option value="manoj">Manoj</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="f-locale">Locale</label>
+      <select id="f-locale">
+        <option value="en">English</option>
+        <option value="hi">हिन्दी</option>
+        <option value="ta">தமிழ்</option>
+      </select>
+    </div>
+    <button type="button" id="apply">Apply &amp; recompute</button>
+  </form>
+
+  <div class="tabs">
+    <button type="button" id="tab-panchang">Panchang</button>
+    <button type="button" id="tab-kundali">Kundali</button>
+  </div>
+
+  <div id="error-banner" role="alert"></div>
+
+  <main>
+    <div class="view" id="panchang-view"></div>
+    <div class="view hidden" id="kundali-view"></div>
+  </main>
+
+  <footer>
+    Demo of <b>vpv-panchangam</b> — computations run locally via the
+    Swiss Ephemeris WebAssembly build (no server, no data sent anywhere).
+    ECharts and highlight.js are loaded from a CDN for visualisation.
+  </footer>
+
+  <script src="./dist/vpv-demo.mjs" type="module"></script>
+  <script src="./app.js" type="module"></script>
+</body>
+</html>
