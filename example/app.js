@@ -389,6 +389,8 @@
   function timelineSeg(g, start, end, good, label) {
     var PLOT_L = 118, PLOT_R = 990, PLOT_W = PLOT_R - PLOT_L;
     var emit = function (s, e) {
+      s = Math.max(0, Math.min(1440, s));
+      e = Math.max(0, Math.min(1440, e));
       var x = PLOT_L + (s / 1440) * PLOT_W;
       var w = (PLOT_L + (e / 1440) * PLOT_W) - x;
       if (w <= 0) return;
@@ -1146,10 +1148,6 @@
     legend.appendChild(chip("bad", "inauspicious"));
     box.appendChild(legend);
     section(view, "Day at a glance — all muhurta windows", box, panelSnippet(panchangCall(), "p.auspicious_timings + p.inauspicious_timings + p.gowri_panchang + p.hora + p.nalla_neram"), { auspicious_timings: p.auspicious_timings, inauspicious_timings: p.inauspicious_timings, gowri_panchang: p.gowri_panchang, hora: p.hora, nalla_neram: p.nalla_neram });
-  }
-
-  function kv(w, label, good) {
-    return { start: w.start, end: w.end, label: label, good: good };
   }
 
   // ───────────────────────────── kundali renderer ─────────────────────────
