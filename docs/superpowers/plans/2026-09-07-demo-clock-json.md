@@ -30,7 +30,7 @@
 **Interfaces:**
 - Produces: `jsonToggle(data)` → `<details class="api-json">` element.
 - Produces: `section(container, title, content, snippet, json)` — optional 5th param; when `json !== undefined`, appends `jsonToggle(json)` after the snippet.
-- Produces: `/tmp/demo-check.js json <tab> <expected>` — asserts `<template>` count of `details.api-json` inside the given view's `section.card`s.
+- Produces: `/tmp/demo-check.js json <tab> <expected>` — asserts the count of `details.api-json` inside the given view's `section.card`s.
 
 - [ ] **Step 1: Write the failing probe**
 
