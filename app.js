@@ -67,7 +67,16 @@
     return el("span", "chip " + cls, text);
   }
 
-  function section(container, title, content, snippet) {
+  function jsonToggle(data) {
+    var det = el("details", "api-json");
+    det.appendChild(el("summary", null, "Example JSON response"));
+    var pre = el("pre");
+    pre.textContent = JSON.stringify(data, null, 2);
+    det.appendChild(pre);
+    return det;
+  }
+
+  function section(container, title, content, snippet, json) {
     var sec = el("section", "card");
     sec.appendChild(el("h3", "section-title", title));
     if (content) sec.appendChild(content);
@@ -81,6 +90,7 @@
       sec.appendChild(pre);
       if (hljs) hljs.highlightElement(code);
     }
+    if (json !== undefined) sec.appendChild(jsonToggle(json));
     container.appendChild(sec);
     resizeCharts(sec);
   }
@@ -364,7 +374,8 @@
           ["Ratriman (night)", hoursLabel(p.sun_moon.ratriman_hours)],
         ]
       ),
-      panelSnippet(panchangCall(), "p.sun_moon.sunrise, p.sun_moon.sunset")
+      panelSnippet(panchangCall(), "p.sun_moon.sunrise, p.sun_moon.sunset"),
+      p.sun_moon
     );
 
     // 3 — vara & paksha
