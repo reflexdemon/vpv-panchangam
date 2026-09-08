@@ -946,13 +946,6 @@
 
   function renderGowri(view, gowri) {
     var box = el("div");
-    box.appendChild(el("div", "sep", "Day (sunrise → sunset)"));
-    var day = chartEl();
-    box.appendChild(day);
-    var nightTxt = el("div", "sep", "Night");
-    box.appendChild(nightTxt);
-    var night = chartEl();
-    box.appendChild(night);
 
     var daySegs = gowri.day.map(function (s) {
       return { start: dMin(s.start), end: dMin(s.end), label: s.name + (s.auspicious ? " (good)" : " (avoid)"), good: s.auspicious };
@@ -960,9 +953,16 @@
     var nightSegs = gowri.night.map(function (s) {
       return { start: dMin(s.start), end: dMin(s.end), label: s.name + (s.auspicious ? " (good)" : " (avoid)"), good: s.auspicious };
     });
-    if (echarts) {
-      renderStrip(day, daySegs, { fmt: fmtDMin, rowLabel: "Day" });
-      renderStrip(night, nightSegs, { fmt: fmtDMin, rowLabel: "Night" });
+    if (daySegs.concat(nightSegs).length) {
+      box.appendChild(timelineBar({
+        showNow: true,
+        bands: [
+          { label: "Day", segments: daySegs },
+          { label: "Night", segments: nightSegs },
+        ],
+      }));
+    } else {
+      box.appendChild(el("p", "hint", "No windows computed for this day."));
     }
 
     var legend = el("div", "legend");
