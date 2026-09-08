@@ -2,6 +2,8 @@
 
 A complete Vedic Panchanga and Kundali (birth chart) calculator for Node.js and browsers, written in TypeScript. Uses the Swiss Ephemeris via [`@swisseph/browser`](https://www.npmjs.com/package/@swisseph/browser) (WebAssembly) for astronomical calculations and pure TypeScript for all astrological logic.
 
+Try the live interactive demo: https://reflexdemon.github.io/vpv-panchangam/
+
 ## Features
 
 - **Full Drik Panchang**: Tithi, Nakshatra, Yoga, Karana, Vara, Moon sign, Sun sign
