@@ -696,26 +696,34 @@
     );
     section(view, "Panchang (now)", pc, panelSnippet(panchangCall(), "p.panchang.tithi, p.panchang.nakshatra, p.panchang.yoga, p.panchang.karana"), p.panchang);
 
+    // 4b — panchang for date (summary + expandable sequences)
+    var pd = el("div");
+    pd.appendChild(
+      table(
+        ["Field", "Value"],
+        [
+          ["Tithi",    p.panchang.tithi    ? p.panchang.tithi.name    + " · " + fmtTzAuto(p.panchang.tithi.starts_at)    + " → " + fmtTzAuto(p.panchang.tithi.ends_at)    : "—"],
+          ["Nakshatra",p.panchang.nakshatra? p.panchang.nakshatra.name+ " · " + fmtTzAuto(p.panchang.nakshatra.starts_at)+ " → " + fmtTzAuto(p.panchang.nakshatra.ends_at): "—"],
+          ["Yoga",     p.panchang.yoga    ? p.panchang.yoga.name    + " · " + fmtTzAuto(p.panchang.yoga.starts_at)    + " → " + fmtTzAuto(p.panchang.yoga.ends_at)    : "—"],
+          ["Karana",   p.panchang.karana  ? p.panchang.karana.name  + " · " + fmtTzAuto(p.panchang.karana.starts_at)  + " → " + fmtTzAuto(p.panchang.karana.ends_at)  : "—"],
+          ["Paksha",   p.panchang.paksha],
+        ]
+      )
+    );
     ["tithi", "nakshatra", "yoga", "karana"].forEach(function (kind) {
-      var seq = p.panchang[kind + "_sequence"].slice(0, 5);
-      section(
-        view,
-        kind[0].toUpperCase() + kind.slice(1) + " sequence (next 5)",
+      var det = el("details");
+      det.appendChild(el("summary", null, kind[0].toUpperCase() + kind.slice(1) + " sequence (next 5)"));
+      det.appendChild(
         table(
           ["#", "Name", "Starts", "Ends"],
-          seq.map(function (item) {
-            return [
-              item.index,
-              item.name,
-              fmtTzAuto(item.starts_at),
-              fmtTzAuto(item.ends_at),
-            ];
+          p.panchang[kind + "_sequence"].slice(0, 5).map(function (item) {
+            return [item.index, item.name, fmtTzAuto(item.starts_at), fmtTzAuto(item.ends_at)];
           })
-        ),
-        panelSnippet(panchangCall(), "p.panchang." + kind + "_sequence"),
-        p.panchang[kind + "_sequence"]
+        )
       );
+      pd.appendChild(det);
     });
+    section(view, "Panchang for date", pd, panelSnippet(panchangCall(), "p.panchang.tithi, p.panchang.nakshatra, p.panchang.yoga, p.panchang.karana, p.panchang.paksha"), p.panchang);
 
     // 5 — rashi & nakshatra
     var rn = p.rashi_nakshatra;
