@@ -71,8 +71,12 @@
     var det = el("details", "api-json");
     det.appendChild(el("summary", null, "Example JSON response"));
     var pre = el("pre");
-    pre.textContent = JSON.stringify(data, null, 2);
+    var code = el("code", "language-json");
+    code.textContent = JSON.stringify(data, null, 2);
+    pre.classList.add("hli");
+    pre.appendChild(code);
     det.appendChild(pre);
+    if (hljs) hljs.highlightElement(code);
     return det;
   }
 
