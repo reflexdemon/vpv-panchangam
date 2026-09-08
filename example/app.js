@@ -82,6 +82,18 @@
       if (hljs) hljs.highlightElement(code);
     }
     container.appendChild(sec);
+    resizeCharts(sec);
+  }
+
+  // charts are mounted into detached boxes (built before section() appends
+  // them), so their echarts init measures 0×0; re-measure once they are in
+  // the document so every canvas gets its real size
+  function resizeCharts(host) {
+    if (!host || !echarts) return;
+    host.querySelectorAll("[data-chart]").forEach(function (node) {
+      var inst = echarts.getInstanceByDom(node);
+      if (inst) inst.resize();
+    });
   }
 
   function banner(header, detail) {
@@ -1109,19 +1121,43 @@
   }
 
   function renderVargas(view, c) {
-    var box = el("div", "vargas-wrap");
-    var t = vpv && vpv.getLocaleTable ? vpv.getLocaleTable(state.locale) || null : null;
+    var box = el("div");
 
-    c.varga_order.forEach(function (d) {
+    c.varga_order = c.varga_order || [];
+    var avail = c.varga_order.filter(function (d) {
+      return c.vargas["d" + d];
+    });
+
+    var select = el("select", "varga-select");
+    avail.forEach(function (d) {
+      var opt = document.createElement("option");
+      opt.value = String(d);
+      opt.textContent = "D" + d + " — " + c.vargas["d" + d].name;
+      select.appendChild(opt);
+    });
+
+    var target = el("div");
+    function showCard(d) {
+      target.textContent = "";
       var vc = c.vargas["d" + d];
-      if (!vc) return;
-      var card = el("div", "varga-card");
-      var title = vc.name + " (D" + d + ")";
-      card.appendChild(el("div", "varga-title", title));
+      var card = el("div", "varga-card wide");
+      card.appendChild(el("div", "varga-title", vc.name + " (D" + d + ")"));
       card.appendChild(el("div", "varga-sub", vc.subtitle || ""));
       card.appendChild(siGrid(vc));
-      box.appendChild(card);
-    });
+      target.appendChild(card);
+    }
+
+    if (avail.length) {
+      box.appendChild(el("div", "sep", "Divisional varga charts — one at a time"));
+      box.appendChild(select);
+      select.addEventListener("change", function () {
+        showCard(Number(select.value));
+      });
+      showCard(avail[0]);
+    } else {
+      box.appendChild(el("p", "hint", "No divisional charts returned."));
+    }
+    box.appendChild(target);
     section(view, "Divisional charts (D1 ⇄ D60)", box, panelSnippet(chartCall(), "c.vargas, c.varga_order"));
   }
 
@@ -1291,18 +1327,25 @@
 
   function renderFriendships(view, f) {
     var box = el("div");
-    var order = Object.keys(f.composite || {});
-    if (!order.length && f.natural) order = Object.keys(f.natural);
-    box.appendChild(el("div", "sep", "Composite friendship (G = great friend, F = friend, N = neutral, E = enemy, GE = great enemy)"));
-    var rows = order.map(function (from) {
-      var row = [from];
-      order.forEach(function (to) {
-        var rel = f.composite[from] ? f.composite[from][to] : (f.natural[from] ? f.natural[from][to] : "?");
-        row.push(relChip(rel));
-      });
+    var PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"];
+    var composite = f.composite || {};
+    var natural = f.natural || {};
+    function rel(of, to) {
+      return (composite[of] && composite[of][to]) || (natural[of] && natural[of][to]) || "?";
+    }
+    box.appendChild(el("div", "sep", "Friendship matrix (composite overrides natural; G = great friend, F = friend, N = neutral, E = enemy, GE = great enemy)"));
+    var rows = PLANETS.map(function (from) {
+      var row = [from].concat(PLANETS.map(function (to) {
+        return relChip(rel(from, to));
+      }));
       return row;
     });
-    box.appendChild(table(["From \\ To"].concat(order), rows));
+    box.appendChild(table(["From \\ To"].concat(PLANETS), rows));
+    var legend = el("div", "legend");
+    ["G", "F", "N", "E", "GE", "?"].forEach(function (code) {
+      legend.appendChild(relChip(code));
+    });
+    box.appendChild(legend);
     section(view, "Friendships", box, panelSnippet(chartCall(), "c.friendships.composite, c.friendships.natural"));
   }
 
@@ -1482,5 +1525,19 @@
     bind();
     setTab(location.hash === "#kundali" ? "kundali" : "panchang");
     renderActive();
+
+    // keep tabs in sync with manual # hash edits; re-render only on a real switch
+    window.addEventListener("hashchange", function () {
+      var t = location.hash === "#kundali" ? "kundali" : "panchang";
+      if (t !== state.tab) {
+        setTab(t);
+        renderActive();
+      }
+    });
+
+    // keep visible charts sized when the browser window resizes
+    window.addEventListener("resize", function () {
+      resizeCharts(document.querySelector("#" + state.tab + "-view"));
+    });
   });
 })();
