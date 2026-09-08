@@ -1009,7 +1009,7 @@
       ["Julian Day", b.julian_day],
       ["Ayanamsa", b.ayanamsa.toFixed(4) + "° (" + b.ayanamsa_label + ")"],
     ];
-    section(view, "Birth details", table(["Item", "Value"], bRows), chartCall());
+    section(view, "Birth details", table(["Item", "Value"], bRows), chartCall(), c.birth);
 
     // 2 — planets
     var pRows = c.planets_data.map(function (pl) {
@@ -1045,7 +1045,7 @@
         flagCell,
       ];
     });
-    section(view, "Planets", table(["Planet", "House / sign", "Degree", "Longitude", "Nakshatra", "Special"], pRows), panelSnippet(chartCall(), "c.planets_data"));
+    section(view, "Planets", table(["Planet", "House / sign", "Degree", "Longitude", "Nakshatra", "Special"], pRows), panelSnippet(chartCall(), "c.planets_data"), c.planets_data);
 
     // 3 — D1 chart (South Indian grid + wheel)
     renderD1(view, c);
@@ -1147,7 +1147,8 @@
       view,
       "D1 natal chart",
       box,
-      panelSnippet(chartCall(), "c.d1_chart, c.ascendant, c.planets_data")
+      panelSnippet(chartCall(), "c.d1_chart, c.ascendant, c.planets_data"),
+      c.d1_chart
     );
   }
 
@@ -1324,7 +1325,7 @@
       box.appendChild(el("p", "hint", "No divisional charts returned."));
     }
     box.appendChild(target);
-    section(view, "Divisional charts (D1 ⇄ D60)", box, panelSnippet(chartCall(), "c.vargas, c.varga_order"));
+    section(view, "Divisional charts (D1 ⇄ D60)", box, panelSnippet(chartCall(), "c.vargas, c.varga_order"), { varga_order: c.varga_order, vargas: c.vargas });
   }
 
   function renderAshtakavarga(view, akv) {
@@ -1382,7 +1383,7 @@
       });
       sav.style.height = "200px";
     }
-    section(view, "Ashtakavarga", box, panelSnippet(chartCall(), "c.ashtakavarga.bav, c.ashtakavarga.sav"));
+    section(view, "Ashtakavarga", box, panelSnippet(chartCall(), "c.ashtakavarga.bav, c.ashtakavarga.sav"), akv);
   }
 
   function renderDasha(view, dasha, antar) {
@@ -1450,7 +1451,7 @@
       }
     }
 
-    section(view, "Vimshottari dasha", box, panelSnippet(chartCall(), "c.dasha, c.dasha_antar"));
+    section(view, "Vimshottari dasha", box, panelSnippet(chartCall(), "c.dasha, c.dasha_antar"), { dasha: dasha, dasha_antar: antar });
   }
 
   function renderKarakas(view, c) {
@@ -1470,7 +1471,7 @@
         ["Swamsa (own-sign placement)", c.swamsa],
       ]
     ));
-    section(view, "Jaimini karakas", box, panelSnippet(chartCall(), "c.karakas, c.karakamsa, c.swamsa"));
+    section(view, "Jaimini karakas", box, panelSnippet(chartCall(), "c.karakas, c.karakamsa, c.swamsa"), { karakas: c.karakas, karakamsa: c.karakamsa, swamsa: c.swamsa });
   }
 
   function renderKalsarpa(view, s) {
@@ -1488,7 +1489,7 @@
         ]
       )
     );
-    section(view, "Kalsarpa dosha", box, panelSnippet(chartCall(), "c.kalsarpa"));
+    section(view, "Kalsarpa dosha", box, panelSnippet(chartCall(), "c.kalsarpa"), s);
   }
 
   function renderFriendships(view, f) {
@@ -1512,7 +1513,7 @@
       legend.appendChild(relChip(code));
     });
     box.appendChild(legend);
-    section(view, "Friendships", box, panelSnippet(chartCall(), "c.friendships.composite, c.friendships.natural"));
+    section(view, "Friendships", box, panelSnippet(chartCall(), "c.friendships.composite, c.friendships.natural"), f);
   }
 
   function relChip(rel) {
@@ -1552,7 +1553,7 @@
         })
       )
     );
-    section(view, "Drishti (aspects)", box, panelSnippet(chartCall(), "c.drishti.aspects, c.drishti.mutual, c.drishti.by_planet"));
+    section(view, "Drishti (aspects)", box, panelSnippet(chartCall(), "c.drishti.aspects, c.drishti.mutual, c.drishti.by_planet"), d);
   }
 
   // ───────────────────────────── wiring ───────────────────────────────────
