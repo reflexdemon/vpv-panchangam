@@ -210,6 +210,152 @@
     return host;
   }
 
+  // ── 24h clock (pure SVG, no ECharts) ───────────────────────────────────
+
+  function clockPolar(cx, cy, r, frac) {
+    var a = Math.PI * 2 * frac - Math.PI / 2;
+    return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+  }
+
+  function clockArcPath(cx, cy, r0, r1, f0, f1) {
+    var large = f1 - f0 > 0.5 ? 1 : 0;
+    var o0 = clockPolar(cx, cy, r0, f0), o1 = clockPolar(cx, cy, r0, f1);
+    var i0 = clockPolar(cx, cy, r1, f0), i1 = clockPolar(cx, cy, r1, f1);
+    return ["M", o0[0], o0[1], "A", r0, r0, 0, large, 1, o1[0], o1[1],
+      "L", i1[0], i1[1], "A", r1, r1, 0, large, 0, i0[0], i0[1], "Z"].join(" ");
+  }
+
+  function clockDial(opts) {
+    var NS = "http://www.w3.org/2000/svg";
+    var size = 500, cx = size / 2, cy = size / 2;
+    var R_ARC0 = 214, R_ARC1 = 168, R_TICKS = 216, R_ANN = 232, R_LABEL = 134;
+    var svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("class", "clock");
+    svg.setAttribute("viewBox", "0 0 " + size + " " + size);
+
+    var ring = document.createElementNS(NS, "circle");
+    ring.setAttribute("class", "ring");
+    ring.setAttribute("cx", cx); ring.setAttribute("cy", cy); ring.setAttribute("r", R_ANN);
+    svg.appendChild(ring);
+
+    var base = document.createElementNS(NS, "path");
+    base.setAttribute("class", "arc-neutral");
+    base.setAttribute("d", clockArcPath(cx, cy, R_ARC0, R_ARC1, 0, 1));
+    svg.appendChild(base);
+
+    (opts.zones || []).forEach(function (z) {
+      if (z.endMin <= z.startMin) return;
+      var f0 = z.startMin / 1440, f1 = z.endMin / 1440;
+      var g = document.createElementNS(NS, "g");
+      var p = document.createElementNS(NS, "path");
+      p.setAttribute("class", "arc-" + (z.cls || "neutral"));
+      p.setAttribute("d", clockArcPath(cx, cy, R_ARC0, R_ARC1, f0, f1));
+      var tip = document.createElementNS(NS, "title");
+      tip.textContent = z.label + " · " + fmtDMin(z.startMin) + "–" + fmtDMin(z.endMin);
+      g.appendChild(tip);
+      g.appendChild(p);
+      if (z.labelText) {
+        var mid = (f0 + f1) / 2;
+        var pos = clockPolar(cx, cy, (R_ARC0 + R_ARC1) / 2, mid);
+        var rot = mid * 360;
+        if (rot > 90 && rot < 270) rot += 180;
+        var txt = document.createElementNS(NS, "text");
+        txt.setAttribute("class", "arc-label");
+        txt.setAttribute("x", pos[0]); txt.setAttribute("y", pos[1]);
+        txt.setAttribute("transform", "rotate(" + rot.toFixed(1) + " " + pos[0] + " " + pos[1] + ")");
+        txt.textContent = z.labelText;
+        g.appendChild(txt);
+      }
+      svg.appendChild(g);
+    });
+
+    for (var h = 0; h < 24; h++) {
+      var f = h / 24;
+      var t0 = clockPolar(cx, cy, R_TICKS, f);
+      var t1 = clockPolar(cx, cy, R_ARC1, f);
+      var tk = document.createElementNS(NS, "line");
+      tk.setAttribute("class", "tick");
+      tk.setAttribute("x1", t0[0]); tk.setAttribute("y1", t0[1]);
+      tk.setAttribute("x2", t1[0]); tk.setAttribute("y2", t1[1]);
+      svg.appendChild(tk);
+      var lpos = clockPolar(cx, cy, R_LABEL, f + 1 / 48);
+      var lb = document.createElementNS(NS, "text");
+      lb.setAttribute("class", "hlabel");
+      lb.setAttribute("x", lpos[0]); lb.setAttribute("y", lpos[1]);
+      lb.textContent = String(h).padStart(2, "0");
+      svg.appendChild(lb);
+    }
+    for (var m = 0; m < 48; m++) {
+      var fm = (m + 0.5) / 48;
+      var a0 = clockPolar(cx, cy, 202, fm);
+      var a1 = clockPolar(cx, cy, 186, fm);
+      var mk = document.createElementNS(NS, "line");
+      mk.setAttribute("class", "tick");
+      mk.setAttribute("x1", a0[0]); mk.setAttribute("y1", a0[1]);
+      mk.setAttribute("x2", a1[0]); mk.setAttribute("y2", a1[1]);
+      svg.appendChild(mk);
+    }
+
+    var title = document.createElementNS(NS, "text");
+    title.setAttribute("class", "clock-title");
+    title.setAttribute("x", cx); title.setAttribute("y", cy - 4);
+    title.textContent = opts.title || "";
+    svg.appendChild(title);
+    var nowTxt = document.createElementNS(NS, "text");
+    nowTxt.setAttribute("class", "clock-now-time");
+    nowTxt.setAttribute("x", cx); nowTxt.setAttribute("y", cy + 20);
+    nowTxt.textContent = "--:--:--";
+    svg.appendChild(nowTxt);
+
+    if (opts.showNow) {
+      var h0 = clockPolar(cx, cy, 10, 0.25);
+      var h1 = clockPolar(cx, cy, R_ARC1 - 4, 0.25);
+      var hand = document.createElementNS(NS, "line");
+      hand.setAttribute("class", "clock-now");
+      hand.setAttribute("data-cx", cx); hand.setAttribute("data-cy", cy);
+      hand.setAttribute("x1", h0[0]); hand.setAttribute("y1", h0[1]);
+      hand.setAttribute("x2", h1[0]); hand.setAttribute("y2", h1[1]);
+      hand.setAttribute("transform", "rotate(-90 " + cx + " " + cy + ")");
+      svg.appendChild(hand);
+      var dot = document.createElementNS(NS, "circle");
+      dot.setAttribute("class", "clock-now-dot");
+      dot.setAttribute("cx", cx); dot.setAttribute("cy", cy);
+      dot.setAttribute("r", 7);
+      svg.appendChild(dot);
+    }
+    startClockNow();
+    return svg;
+  }
+
+  var clockNowTimer = null;
+  function nowInTz() {
+    try {
+      var s = new Intl.DateTimeFormat("en", {
+        timeZone: state.tz, hourCycle: "h23",
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+      }).format(new Date());
+      var mm = /^(\d{1,2}):(\d{1,2}):(\d{1,2})/.exec(s);
+      return mm ? { h: Number(mm[1]), min: Number(mm[2]), s: Number(mm[3]) } : null;
+    } catch (e) { return null; }
+  }
+  function stepClockNow() {
+    var n = nowInTz();
+    if (!n) return;
+    var frac = (n.h * 3600 + n.min * 60 + n.s) / 86400;
+    var ang = frac * 360 - 90;
+    document.querySelectorAll(".clock-now").forEach(function (ln) {
+      var cxx = ln.getAttribute("data-cx"), cyy = ln.getAttribute("data-cy");
+      ln.setAttribute("transform", "rotate(" + ang.toFixed(3) + " " + cxx + " " + cyy + ")");
+    });
+    var t = String(n.h).padStart(2, "0") + ":" + String(n.min).padStart(2, "0") + ":" + String(n.s).padStart(2, "0");
+    document.querySelectorAll(".clock-now-time").forEach(function (el2) { el2.textContent = t; });
+  }
+  function startClockNow() {
+    if (clockNowTimer) return;
+    stepClockNow();
+    clockNowTimer = setInterval(stepClockNow, 1000);
+  }
+
   // Generic horizontal time strip built from { start, end, label, good } (numerical x units)
   function renderStrip(node, items, opts) {
     opts = opts || {};
@@ -685,25 +831,26 @@
 
   function renderHora(view, hora) {
     var box = el("div");
-    var day = chartEl();
-    var night = chartEl();
-    box.appendChild(el("div", "sep", "Hora for the day (12 one-hora spans)"));
-    box.appendChild(day);
-    var dSegs = hora.day.map(function (s) {
-      return { start: dMin(s.start), end: dMin(s.end), label: s.name + (s.auspicious ? " (good)" : " (avoid)"), good: s.auspicious };
+    var zones = hora.day.concat(hora.night).map(function (s) {
+      return {
+        startMin: dMin(s.start), endMin: dMin(s.end),
+        cls: s.auspicious ? "good" : "bad",
+        label: s.name + " hora (" + (s.auspicious ? "good" : "avoid") + ")",
+        labelText: s.name,
+      };
     });
-    var nSegs = hora.night.map(function (s) {
-      return { start: dMin(s.start), end: dMin(s.end), label: s.name + (s.auspicious ? " (good)" : " (avoid)"), good: s.auspicious };
-    });
-    if (echarts) renderStrip(day, dSegs, { fmt: fmtDMin, rowLabel: "Day" });
-    box.appendChild(el("div", "sep", "Hora for the night"));
-    box.appendChild(night);
-    if (echarts) renderStrip(night, nSegs, { fmt: fmtDMin, rowLabel: "Night" });
+    box.appendChild(clockDial({ title: "Hora", zones: zones, showNow: true }));
+    var rows = hora.day.map(function (s) {
+      return [s.name, "Day", fmtTzAuto(s.start), fmtTzAuto(s.end), s.auspicious ? "Good" : "Avoid"];
+    }).concat(hora.night.map(function (s) {
+      return [s.name, "Night", fmtTzAuto(s.start), fmtTzAuto(s.end), s.auspicious ? "Good" : "Avoid"];
+    }));
+    box.appendChild(table(["Planet", "Day/Night", "Start", "Finish", "Status"], rows));
     var legend = el("div", "legend");
     legend.appendChild(chip("good", "good hora"));
     legend.appendChild(chip("bad", "avoiding hora"));
     box.appendChild(legend);
-    section(view, "Hora (planetary hours)", box, panelSnippet(panchangCall(), "p.hora.day, p.hora.night"));
+    section(view, "Hora (planetary hours)", box, panelSnippet(panchangCall(), "p.hora.day, p.hora.night"), hora);
   }
 
   function renderNallaNeram(view, windows) {

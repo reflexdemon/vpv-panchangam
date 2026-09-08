@@ -187,6 +187,18 @@
     .varga-title { font-weight: 700; font-size: 13px; }
     .varga-sub { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
     footer { padding: 20px 24px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); }
+    .clock { width: 100%; max-width: 560px; margin: 0 auto; display: block; }
+    .clock .ring { fill: #f6f8fa; stroke: var(--line); stroke-width: 1.5; }
+    .clock .arc-neutral { fill: #e3e6ea; }
+    .clock .arc-good { fill: #2a9d4f; stroke: #fff; stroke-width: 1; }
+    .clock .arc-bad { fill: #d73a49; stroke: #fff; stroke-width: 1; }
+    .clock .tick { stroke: var(--muted); stroke-width: 1; opacity: 0.55; }
+    .clock .hlabel { font-size: 11px; fill: var(--muted); text-anchor: middle; }
+    .clock .arc-label { font-size: 11px; font-weight: 700; fill: #fff; text-anchor: middle; paint-order: stroke; stroke: rgba(0,0,0,0.45); stroke-width: 3px; }
+    .clock .clock-now { stroke: #0969da; stroke-width: 3; stroke-linecap: round; }
+    .clock .clock-now-dot { fill: #0969da; }
+    .clock .clock-now-time { font-size: 16px; font-weight: 700; fill: #0969da; text-anchor: middle; }
+    .clock .clock-title { font-size: 13px; fill: var(--muted); text-anchor: middle; }
   </style>
 </head>
 <body>
