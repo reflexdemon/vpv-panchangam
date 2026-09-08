@@ -855,12 +855,10 @@
 
   function renderNallaNeram(view, windows) {
     var box = el("div");
-    var host = chartEl();
-    box.appendChild(host);
-    var segs = windows.map(function (w) {
-      return { start: dMin(w.start), end: dMin(w.end), label: "Nalla Neram", good: true };
+    var zones = windows.map(function (w) {
+      return { startMin: dMin(w.start), endMin: dMin(w.end), cls: "good", label: "Nalla Neram" };
     });
-    if (echarts) renderStrip(host, segs, { fmt: fmtDMin, rowLabel: "Good" });
+    box.appendChild(clockDial({ title: "Nalla Neram", zones: zones, showNow: true }));
     box.appendChild(
       table(
         ["Nalla Neram (good time)", "From", "To"],
@@ -869,7 +867,7 @@
         })
       )
     );
-    section(view, "Nalla Neram", box, panelSnippet(panchangCall(), "p.nalla_neram"));
+    section(view, "Nalla Neram", box, panelSnippet(panchangCall(), "p.nalla_neram"), windows);
   }
 
   var TYAJYAM_LABEL = {
