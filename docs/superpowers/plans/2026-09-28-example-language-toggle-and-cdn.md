@@ -225,7 +225,14 @@ import { describe, it, expect } from "vitest";
 import * as ns from "../example/snippets.js";
 
 const snippets = (ns as any).default ?? ns;
-const { snippetFor, installBlock, version, browserUrl, PACKAGE, FALLBACK_VERSION } = snippets;
+const {
+  snippetFor,
+  installBlock,
+  version,
+  browserUrl,
+  PACKAGE,
+  FALLBACK_VERSION,
+} = snippets;
 
 const PAN = {
   fn: "computeDetailedPanchang",
@@ -290,7 +297,9 @@ describe("snippetFor — typescript", () => {
   });
 
   it("keeps the field-access tail", () => {
-    expect(out).toContain("p.vara, p.panchang.paksha // featured fields read above");
+    expect(out).toContain(
+      "p.vara, p.panchang.paksha // featured fields read above",
+    );
   });
 
   it("annotates an extract line and imports its type", () => {
@@ -329,7 +338,9 @@ describe("snippetFor — javascript", () => {
   });
 
   it("omits the trailing comment's type-only tail difference", () => {
-    expect(out).toContain("p.vara, p.panchang.paksha // featured fields read above");
+    expect(out).toContain(
+      "p.vara, p.panchang.paksha // featured fields read above",
+    );
   });
 });
 
@@ -345,7 +356,9 @@ describe("installBlock", () => {
   it("npm shows the install command and a bare-specifier import", () => {
     const out = installBlock("npm", "0.4.0");
     expect(out).toContain("npm install vpv-panchangam");
-    expect(out).toContain('import { computeDetailedPanchang } from "vpv-panchangam";');
+    expect(out).toContain(
+      'import { computeDetailedPanchang } from "vpv-panchangam";',
+    );
   });
 
   it("jsdelivr shows the pinned browser bundle URL", () => {
