@@ -2,8 +2,10 @@
 // Built as an ES module so @swisseph/browser's import.meta.url stays intact and
 // its WASM sidecar resolves relative to this bundle (example/dist/swisseph.wasm).
 import * as lib from "../src/index";
+import pkg from "../package.json";
 
 const vpv: Record<string, unknown> = {
+  version: pkg.version,
   computeDetailedPanchang: lib.computeDetailedPanchang,
   computeChart: lib.computeChart,
   PanchangError: lib.PanchangError,
