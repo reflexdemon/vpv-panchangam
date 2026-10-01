@@ -1889,6 +1889,10 @@
 
   var installTab = "npm";
 
+  // one pending label reset at a time: rapid repeat clicks must revert the button
+  // 1200ms after the MOST RECENT copy, not after whichever click happened first
+  var installCopyTimer = null;
+
   // Shown only when snippets.js failed to load. Deliberately a diagnostic, not a
   // substitute: the CDN pins and the script tag are the composer's job, and
   // vpvVersion is null in this state, so nothing version-specific may be baked in.
@@ -1913,7 +1917,9 @@
   function setInstallTab(tab) {
     installTab = tab;
     document.querySelectorAll("[data-install]").forEach(function (b) {
-      b.classList.toggle("active", b.getAttribute("data-install") === tab);
+      var on = b.getAttribute("data-install") === tab;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
     });
     renderInstall();
   }
@@ -1926,7 +1932,9 @@
     var text = $("#install-code").textContent;
     function done(label) {
       btn.textContent = label;
-      setTimeout(function () {
+      if (installCopyTimer) clearTimeout(installCopyTimer);
+      installCopyTimer = setTimeout(function () {
+        installCopyTimer = null;
         btn.textContent = "Copy";
       }, 1200);
     }
