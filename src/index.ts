@@ -1,5 +1,5 @@
 /**
- * vedic-panchanga — public API barrel export
+ * vpv-panchangam — public API barrel export
  */
 
 // Public API functions

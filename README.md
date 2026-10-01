@@ -1,4 +1,4 @@
-# vedic-panchanga
+# vpv-panchangam
 
 A complete Vedic Panchanga and Kundali (birth chart) calculator for Node.js and browsers, written in TypeScript. Uses the Swiss Ephemeris via [`@swisseph/browser`](https://www.npmjs.com/package/@swisseph/browser) (WebAssembly) for astronomical calculations and pure TypeScript for all astrological logic.
 
@@ -31,24 +31,76 @@ Try the live interactive demo: https://reflexdemon.github.io/vpv-panchangam/
 ## Installation
 
 ```bash
-npm install vedic-panchanga
+npm install vpv-panchangam
 ```
 
 The astronomical engine ships as a WebAssembly module inside `@swisseph/browser`; no native C++ build step is required. In browsers the engine is loaded automatically; in Node.js a small `fetch` shim is installed on first use to serve the bundled `.wasm`.
 
-## Browser usage
+## Browser and CDN usage
 
-The package is compiled to CommonJS with a dynamic `import()` of the ESM-only
-`@swisseph/browser` package, so it also works in bundlers that support
-dynamic imports (Vite, webpack, Rollup …). WASM loading follows the standard
-`@swisseph/browser` path — no extra configuration needed.
+The npm entry point is **CommonJS** and it lazily `import()`s the ESM-only
+`@swisseph/browser` package, so a CDN cannot load the package by name — a bare
+specifier like `https://cdn.jsdelivr.net/npm/vpv-panchangam` will not resolve,
+and the Swiss Ephemeris WebAssembly is a sidecar file that must sit next to the
+module loading it.
+
+That is what `dist/browser/` is for: a pre-bundled ESM module with
+`swisseph.wasm` beside it, both served straight from npm.
+
+### npm (Node.js and bundlers)
+
+```bash
+npm install vpv-panchangam
+```
+
+```js
+import { computeDetailedPanchang } from 'vpv-panchangam';
+```
+
+### CDN — no build step
+
+```js
+import { computeDetailedPanchang } from 'https://cdn.jsdelivr.net/npm/vpv-panchangam@0.4.0/dist/browser/vpv-panchangam.mjs';
+```
+
+On `unpkg` instead:
+
+```js
+import { computeDetailedPanchang } from 'https://unpkg.com/vpv-panchangam@0.4.0/dist/browser/vpv-panchangam.mjs';
+```
+
+### CDN — plain script tag
+
+Paste into your HTML; it exposes `window.vpv`.
+
+```html
+<script type="module">
+  import * as vpv from "https://cdn.jsdelivr.net/npm/vpv-panchangam@0.4.0/dist/browser/vpv-panchangam.mjs";
+
+  window.vpv = vpv;
+</script>
+```
+
+```js
+const p = await window.vpv.computeDetailedPanchang('2026-09-28', 23.1765, 75.7885, 'Asia/Kolkata', 'en');
+```
+
+> The `swisseph.wasm` sidecar wants an `application/wasm` MIME type. Hosts that
+> serve it as `application/octet-stream` — which jsDelivr and unpkg commonly do —
+> still load the module fine, but Emscripten logs a MIME warning and falls back
+> to `ArrayBuffer` instantiation instead of `instantiateStreaming`. Harmless.
+
+> Pin the exact version. The URL hardcodes the `dist/browser/` path, so a range
+> like `@0.4` or `@latest` will break the moment a release moves that file.
+
+Try it all live at <https://reflexdemon.github.io/vpv-panchangam/>.
 
 ## Quick Start
 
 ### Panchang (Daily Almanac)
 
 ```typescript
-import { computeDetailedPanchang } from 'vedic-panchanga';
+import { computeDetailedPanchang } from 'vpv-panchangam';
 
 const panchang = await computeDetailedPanchang(
   '2026-07-04',       // date (YYYY-MM-DD), defaults to today
@@ -68,7 +120,7 @@ console.log(panchang.auspicious_timings.abhijit);
 ### Birth Chart (Kundali)
 
 ```typescript
-import { computeChart } from 'vedic-panchanga';
+import { computeChart } from 'vpv-panchangam';
 
 const chart = await computeChart(
   {
@@ -144,7 +196,7 @@ awaited once before calling the calculation functions (the public `compute*`
 functions auto-initialize):
 
 ```typescript
-import { EphemerisService } from 'vedic-panchanga';
+import { EphemerisService } from 'vpv-panchangam';
 
 const ephe = EphemerisService.getInstance();
 await ephe.init({ ayanamsa: 'lahiri' }); // default
@@ -167,7 +219,7 @@ const [timezone] = find(lat, lon);
 All three locales are bundled and resolved at runtime:
 
 ```typescript
-import { getLocaleTable, resolveName } from 'vedic-panchanga';
+import { getLocaleTable, resolveName } from 'vpv-panchangam';
 
 const table = getLocaleTable('ta');
 console.log(table.nakshatras[0]); // "அஸ்வினி"
