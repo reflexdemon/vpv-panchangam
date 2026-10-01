@@ -41,8 +41,11 @@ the existing code blocks, so results stay put.
 
 The band under the title shows how to load the package: **npm** (Node and
 bundlers), **jsDelivr** and **unpkg** (no build step), and a paste-ready
-`<script type="module">` tag. URLs are pinned to the exact build and generated
-from `package.json` at build time, so they cannot go stale.
+`<script type="module">` tag. The version string is injected from
+`package.json` at build time, so the pinned URLs never drift from the
+manifest — but the referenced build must actually be published at that
+version for the URLs to resolve, so the exact version must be bumped here by
+hand at release time.
 
 ## Run locally
 

@@ -54,6 +54,11 @@
     return n;
   }
 
+  // snippetRegistry is global, not per-view: emptying the container orphans the
+  // outgoing view's <code> nodes (still holding their old text, now unregistered).
+  // Harmless only because setTab() always follows with renderActive(), which
+  // rebuilds the target view from state.lang. Skip that render and the language
+  // toggle silently stops updating the view you are looking at.
   function clear(node) {
     disposeCharts(node);
     node.textContent = "";
@@ -1889,6 +1894,16 @@
 
   var installTab = "npm";
 
+  // the four tabs are not all shell: only npm is. the CDN tabs are JS module
+  // imports and the script tab is HTML, and hljs picks its highlighter (and its
+  // token classes) from this class alone
+  var INSTALL_LANG = {
+    npm: "language-bash",
+    jsdelivr: "language-javascript",
+    unpkg: "language-javascript",
+    script: "language-xml",
+  };
+
   // one pending label reset at a time: rapid repeat clicks must revert the button
   // 1200ms after the MOST RECENT copy, not after whichever click happened first
   var installCopyTimer = null;
@@ -1907,7 +1922,7 @@
       ? snippets.installBlock(installTab, vpvVersion)
       : INSTALL_HINT;
     code.textContent = text;
-    code.className = "language-bash";
+    code.className = INSTALL_LANG[installTab] || "language-bash";
     // hljs refuses to re-highlight an element it has already seen, and a tab
     // switch is a re-render of the same node
     delete code.dataset.highlighted;
