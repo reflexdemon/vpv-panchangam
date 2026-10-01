@@ -1834,6 +1834,14 @@
     $("#lang-js").addEventListener("click", function () {
       setLang("js");
     });
+
+    document.querySelectorAll("[data-install]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        setInstallTab(b.getAttribute("data-install"));
+      });
+    });
+    $("#install-copy").addEventListener("click", copyInstall);
+    setInstallTab("npm");
   }
 
   function setTab(t) {
@@ -1875,6 +1883,70 @@
     state.lang = lang;
     saveLang(lang);
     applyLang();
+  }
+
+  // ───────────────────────────── invocation band ───────────────────────────
+
+  var installTab = "npm";
+
+  // Shown only when snippets.js failed to load. Deliberately a diagnostic, not a
+  // substitute: the CDN pins and the script tag are the composer's job, and
+  // vpvVersion is null in this state, so nothing version-specific may be baked in.
+  var INSTALL_HINT =
+    "Install snippets unavailable — snippets.js did not load.";
+
+  function renderInstall() {
+    var code = $("#install-code");
+    // unguarded snippets.installBlock() would throw on every tab switch and take
+    // the whole demo down with it, exactly as the section snippets did
+    var text = snippets
+      ? snippets.installBlock(installTab, vpvVersion)
+      : INSTALL_HINT;
+    code.textContent = text;
+    code.className = "language-bash";
+    // hljs refuses to re-highlight an element it has already seen, and a tab
+    // switch is a re-render of the same node
+    delete code.dataset.highlighted;
+    if (hljs) hljs.highlightElement(code);
+  }
+
+  function setInstallTab(tab) {
+    installTab = tab;
+    document.querySelectorAll("[data-install]").forEach(function (b) {
+      b.classList.toggle("active", b.getAttribute("data-install") === tab);
+    });
+    renderInstall();
+  }
+
+  function copyInstall() {
+    var btn = $("#install-copy");
+    // copied straight off the rendered node: it is what the user can see, and it
+    // keeps installBlock() from being called a second time on a click that can
+    // happen with the composer missing
+    var text = $("#install-code").textContent;
+    function done(label) {
+      btn.textContent = label;
+      setTimeout(function () {
+        btn.textContent = "Copy";
+      }, 1200);
+    }
+    if (!navigator.clipboard || !navigator.clipboard.writeText) {
+      // select the text so the user can copy manually
+      var range = document.createRange();
+      range.selectNodeContents($("#install-code"));
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      return;
+    }
+    navigator.clipboard.writeText(text).then(
+      function () {
+        done("Copied");
+      },
+      function () {
+        done("Press ⌘C");
+      }
+    );
   }
 
   function collect() {

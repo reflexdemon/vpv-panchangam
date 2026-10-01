@@ -107,6 +107,34 @@
       cursor: pointer;
     }
     .lang-toggle button.active { background: #0969da; border-color: #0969da; }
+    .install {
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      padding: 12px 24px;
+    }
+    .install-tabs { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+    .install-tabs button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 6px;
+      font-size: 12px;
+      padding: 4px 12px;
+    }
+    .install-tabs button.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .install-body { display: flex; align-items: flex-start; gap: 10px; }
+    .install-body pre.code-block { flex: 1; margin: 0; }
+    button.ghost {
+      background: #fff;
+      color: var(--accent);
+      flex-shrink: 0;
+      min-width: 74px;
+    }
+    button.ghost:hover { background: #f6f8fa; }
     .view { padding: 16px 24px 48px; max-width: 1080px; margin: 0 auto; }
     .hidden { display: none; }
     #error-banner {
@@ -242,6 +270,19 @@
       </div>
     </div>
   </header>
+
+  <section class="install" aria-label="Install and load">
+    <div class="install-tabs" role="tablist">
+      <button type="button" data-install="npm" class="active">npm</button>
+      <button type="button" data-install="jsdelivr">jsDelivr</button>
+      <button type="button" data-install="unpkg">unpkg</button>
+      <button type="button" data-install="script">&lt;script type="module"&gt;</button>
+    </div>
+    <div class="install-body">
+      <pre class="code-block"><code id="install-code" class="language-bash"></code></pre>
+      <button type="button" id="install-copy" class="ghost">Copy</button>
+    </div>
+  </section>
 
   <form class="controls" id="controls" onsubmit="return false">
     <div class="field">
