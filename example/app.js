@@ -1847,6 +1847,18 @@
   // swaps snippet text in place — never re-runs the WASM computation, and the
   // page height is unchanged so there is no scroll jump
   function applyLang() {
+    // the buttons report their state even when the composer failed to load, so a
+    // persisted `js` never renders as though TypeScript were still selected
+    var tsBtn = $("#lang-ts");
+    var jsBtn = $("#lang-js");
+    if (tsBtn) {
+      tsBtn.classList.toggle("active", state.lang === "ts");
+      tsBtn.setAttribute("aria-pressed", state.lang === "ts" ? "true" : "false");
+    }
+    if (jsBtn) {
+      jsBtn.classList.toggle("active", state.lang === "js");
+      jsBtn.setAttribute("aria-pressed", state.lang === "js" ? "true" : "false");
+    }
     if (!snippets) return;
     snippetRegistry.forEach(function (entry) {
       var text = snippets.snippetFor(entry.spec, vpvVersion, state.lang);
@@ -1856,10 +1868,6 @@
       delete entry.code.dataset.highlighted;
       if (hljs) hljs.highlightElement(entry.code);
     });
-    var tsBtn = $("#lang-ts");
-    var jsBtn = $("#lang-js");
-    if (tsBtn) tsBtn.classList.toggle("active", state.lang === "ts");
-    if (jsBtn) jsBtn.classList.toggle("active", state.lang === "js");
   }
 
   function setLang(lang) {
