@@ -19,8 +19,33 @@ The page has two tabs:
   Ashtakavarga, Vimshottari dasha timeline, Jaimini karakas, Kalsarpa,
   friendship tables and the Drishti aspect edges.
 
-Every panel includes the exact TypeScript snippet (with the current inputs) so
-each feature can be copied back into real code.
+Every panel includes the exact snippet (with the current inputs) so each
+feature can be copied back into real code. Each snippet is self-contained —
+it carries its own import line.
+
+## Snippet language toggle
+
+The **TypeScript / JavaScript** control in the header flips every snippet on
+the page at once. The choice is remembered in `localStorage`.
+
+- **TypeScript** imports from the package and annotates the declaration with the
+  real exported type (`PanchangResponse`, `ChartResponse`, `Hora`, `Tyajyam`,
+  `AshtakavargaResult`, `KalsarpaResult`, `FriendshipTables`, `AspectResult`).
+- **JavaScript** imports from the pinned jsDelivr browser bundle and carries no
+  annotations.
+
+Switching does not re-run any calculation — the toggle rewrites the text inside
+the existing code blocks, so results stay put.
+
+## Invocation band
+
+The band under the title shows how to load the package: **npm** (Node and
+bundlers), **jsDelivr** and **unpkg** (no build step), and a paste-ready
+`<script type="module">` tag. The version string is injected from
+`package.json` at build time, so the pinned URLs never drift from the
+manifest — but the referenced build must actually be published at that
+version for the URLs to resolve, so the exact version must be bumped here by
+hand at release time.
 
 ## Run locally
 

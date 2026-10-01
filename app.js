@@ -9,6 +9,7 @@
   var vpv = window.vpv;
   var echarts = window.echarts;
   var hljs = window.hljs;
+  var snippets = window.vpvSnippets;
 
   // ───────────────────────────── global state ─────────────────────────────
 
@@ -20,7 +21,25 @@
     tz: "Asia/Kolkata",
     ayanamsa: "lahiri",
     locale: "en",
+    lang: readLang(),
   };
+
+  // localStorage throws in some privacy modes; fall back to the default
+  function readLang() {
+    try {
+      return localStorage.getItem("vpv-demo-lang") === "js" ? "js" : "ts";
+    } catch (e) {
+      return "ts";
+    }
+  }
+
+  function saveLang(lang) {
+    try {
+      localStorage.setItem("vpv-demo-lang", lang);
+    } catch (e) {
+      /* in-memory only for this session */
+    }
+  }
 
   // ───────────────────────────── dom helpers ──────────────────────────────
 
@@ -35,9 +54,15 @@
     return n;
   }
 
+  // snippetRegistry is global, not per-view: emptying the container orphans the
+  // outgoing view's <code> nodes (still holding their old text, now unregistered).
+  // Harmless only because setTab() always follows with renderActive(), which
+  // rebuilds the target view from state.lang. Skip that render and the language
+  // toggle silently stops updating the view you are looking at.
   function clear(node) {
     disposeCharts(node);
     node.textContent = "";
+    snippetRegistry.length = 0;
   }
 
   function table(headers, rows, cls) {
@@ -80,18 +105,23 @@
     return det;
   }
 
-  function section(container, title, content, snippet, json) {
+  // rendered <code> elements, so the language toggle can swap text in place
+  // without re-running the WASM computation
+  var snippetRegistry = [];
+
+  function section(container, title, content, spec, json) {
     var sec = el("section", "card");
     sec.appendChild(el("h3", "section-title", title));
     if (content) sec.appendChild(content);
-    if (snippet) {
+    if (spec && snippets) {
       var pre = el("pre", "code-block");
-      var code = el("code", "language-ts");
-      code.textContent = snippet;
+      var code = el("code", state.lang === "ts" ? "language-ts" : "language-javascript");
+      code.textContent = snippets.snippetFor(spec, vpvVersion, state.lang);
       // tag input shown even if a CDN loaded hljs
       pre.classList.add("hli");
       pre.appendChild(code);
       sec.appendChild(pre);
+      snippetRegistry.push({ code: code, spec: spec });
       if (hljs) hljs.highlightElement(code);
     }
     if (json !== undefined) sec.appendChild(jsonToggle(json));
@@ -579,46 +609,58 @@
     return mountChart(node, option);
   }
 
-  // ───────────────────────────── data loaders ─────────────────────────────
+  // ───────────────────────────── snippet specs ─────────────────────────────
 
-  var panchangCall = function () {
+  // snippets.js is local, but a failed load must not take the whole demo down —
+  // section() skips the code blocks instead, so the version is only needed
+  // when the composer is actually there
+  var vpvVersion = snippets ? snippets.version(vpv) : null;
+
+  // bare call arguments — the `const … = await …` declaration is the spec's job
+  function panchangArgs() {
     return (
-      'const p = await computeDetailedPanchang("' +
-      state.date +
-      '", ' +
-      Number(state.lat.toFixed(4)) +
-      ", " +
-      Number(state.lon.toFixed(4)) +
-      ', "' +
-      state.tz +
-      '", "' +
-      state.locale +
-      '");'
+      '"' + state.date + '", ' + Number(state.lat.toFixed(4)) + ", " +
+      Number(state.lon.toFixed(4)) + ', "' + state.tz + '", "' + state.locale + '"'
     );
-  };
+  }
 
-  var chartCall = function () {
+  function chartArgs() {
     return (
-      'const c = await computeChart({\n  date: "' +
-      state.date +
-      '",\n  time: "' +
-      state.time +
-      '",\n  latitude: ' +
-      Number(state.lat.toFixed(4)) +
-      ",\n  longitude: " +
-      Number(state.lon.toFixed(4)) +
-      ',\n  timezone: "' +
-      state.tz +
-      '",\n  ayanamsa: "' +
-      state.ayanamsa +
-      '"\n}, "' +
-      state.locale +
-      '");'
+      "{\n" +
+      '  date: "' + state.date + '",\n' +
+      '  time: "' + state.time + '",\n' +
+      "  latitude: " + Number(state.lat.toFixed(4)) + ",\n" +
+      "  longitude: " + Number(state.lon.toFixed(4)) + ",\n" +
+      '  timezone: "' + state.tz + '",\n' +
+      '  ayanamsa: "' + state.ayanamsa + '"\n' +
+      '}, "' + state.locale + '"'
     );
-  };
+  }
 
-  function panelSnippet(call, access) {
-    return call + "\n\n" + access + " // featured fields read above";
+  function panchangSpec(tail, extra) {
+    return Object.assign(
+      {
+        fn: "computeDetailedPanchang",
+        type: "PanchangResponse",
+        varName: "p",
+        args: panchangArgs(),
+        tail: tail,
+      },
+      extra || {}
+    );
+  }
+
+  function chartSpec(tail, extra) {
+    return Object.assign(
+      {
+        fn: "computeChart",
+        type: "ChartResponse",
+        varName: "c",
+        args: chartArgs(),
+        tail: tail,
+      },
+      extra || {}
+    );
   }
 
   // ───────────────────────────── panchang renderer ────────────────────────
@@ -643,7 +685,7 @@
       "sub",
       "Vara " + p.vara.sanskrit + " (" + p.vara.english + ") • " + p.panchang.paksha
     ));
-    section(view, "Panchang overview", head, panchangCall(), p.panchang);
+    section(view, "Panchang overview", head, panchangSpec(), p.panchang);
 
     // 2 — sun & moon
     section(
@@ -662,7 +704,7 @@
           ["Ratriman (night)", hoursLabel(p.sun_moon.ratriman_hours)],
         ]
       ),
-      panelSnippet(panchangCall(), "p.sun_moon.sunrise, p.sun_moon.sunset"),
+      panchangSpec("p.sun_moon.sunrise, p.sun_moon.sunset"),
       p.sun_moon
     );
 
@@ -677,7 +719,7 @@
           ["Paksha", p.panchang.paksha],
         ]
       ),
-      panelSnippet(panchangCall(), "p.vara, p.panchang.paksha"),
+      panchangSpec("p.vara, p.panchang.paksha"),
       { vara: p.vara, paksha: p.panchang.paksha }
     );
 
@@ -694,7 +736,7 @@
         ]
       )
     );
-    section(view, "Panchang (now)", pc, panelSnippet(panchangCall(), "p.panchang.tithi, p.panchang.nakshatra, p.panchang.yoga, p.panchang.karana"), p.panchang);
+    section(view, "Panchang (now)", pc, panchangSpec("p.panchang.tithi, p.panchang.nakshatra, p.panchang.yoga, p.panchang.karana"), p.panchang);
 
     // 4b — panchang for date (summary + expandable sequences)
     var pd = el("div");
@@ -723,7 +765,7 @@
       );
       pd.appendChild(det);
     });
-    section(view, "Panchang for date", pd, panelSnippet(panchangCall(), "p.panchang.tithi, p.panchang.nakshatra, p.panchang.yoga, p.panchang.karana, p.panchang.paksha"), p.panchang);
+    section(view, "Panchang for date", pd, panchangSpec("p.panchang.tithi, p.panchang.nakshatra, p.panchang.yoga, p.panchang.karana, p.panchang.paksha"), p.panchang);
 
     // 5 — rashi & nakshatra
     var rn = p.rashi_nakshatra;
@@ -741,7 +783,7 @@
       view,
       "Rashi & Nakshatra",
       table(["Item", "Value", "Detail"], rnRows),
-      panelSnippet(panchangCall(), "p.rashi_nakshatra.sunsign, p.rashi_nakshatra.moon_nakshatra_padas"),
+      panchangSpec("p.rashi_nakshatra.sunsign, p.rashi_nakshatra.moon_nakshatra_padas"),
       p.rashi_nakshatra
     );
 
@@ -780,7 +822,7 @@
       view,
       "Calendars",
       table(["Item", "Value"], calRows),
-      panelSnippet(panchangCall(), "p.lunar_month, p.calendars, p.tamil_calendar"),
+      panchangSpec("p.lunar_month, p.calendars, p.tamil_calendar"),
       { lunar_month: p.lunar_month, calendars: p.calendars, tamil_calendar: p.tamil_calendar }
     );
 
@@ -795,7 +837,7 @@
           ["Vedic tropical", p.ritu_ayana.vedic_ritu, p.ritu_ayana.vedic_ayana],
         ]
       ),
-      panelSnippet(panchangCall(), "p.ritu_ayana"),
+      panchangSpec("p.ritu_ayana"),
       p.ritu_ayana
     );
 
@@ -822,7 +864,7 @@
       view,
       "Auspicious timings",
       table(["Muhurta", "From", "To"], auRows),
-      panelSnippet(panchangCall(), "p.auspicious_timings"),
+      panchangSpec("p.auspicious_timings"),
       p.auspicious_timings
     );
 
@@ -845,7 +887,7 @@
       view,
       "Inauspicious timings",
       table(["Avoid", "From", "To"], iaRows),
-      panelSnippet(panchangCall(), "p.inauspicious_timings"),
+      panchangSpec("p.inauspicious_timings"),
       p.inauspicious_timings
     );
 
@@ -859,7 +901,7 @@
           return [u.sign, u.rashi, fmtTzAuto(u.start), fmtTzAuto(u.end)];
         })
       ),
-      panelSnippet(panchangCall(), "p.udaya_lagna"),
+      panchangSpec("p.udaya_lagna"),
       p.udaya_lagna
     );
 
@@ -881,7 +923,7 @@
         })
       )
     );
-    section(view, "Chandrabalam & Tarabalam", bal, panelSnippet(panchangCall(), "p.chandrabalam, p.tarabalam"), { chandrabalam: p.chandrabalam, tarabalam: p.tarabalam });
+    section(view, "Chandrabalam & Tarabalam", bal, panchangSpec("p.chandrabalam, p.tarabalam"), { chandrabalam: p.chandrabalam, tarabalam: p.tarabalam });
 
     // 12 — shool & vasa
     section(
@@ -895,7 +937,7 @@
           ["Chandra Vasa", p.shool_vasa.chandra_vasa],
         ]
       ),
-      panelSnippet(panchangCall(), "p.shool_vasa"),
+      panchangSpec("p.shool_vasa"),
       p.shool_vasa
     );
 
@@ -920,7 +962,7 @@
         ]
       )
     );
-    section(view, "Ganda Mula & Ravi Yoga", ye, panelSnippet(panchangCall(), "p.yogas_extra"), p.yogas_extra);
+    section(view, "Ganda Mula & Ravi Yoga", ye, panchangSpec("p.yogas_extra"), p.yogas_extra);
 
     // 14 — gowri panchangam
     renderGowri(view, p.gowri_panchang);
@@ -984,7 +1026,7 @@
       view,
       "Gowri Panchangam",
       box,
-      panelSnippet(panchangCall(), 'p.gowri_panchang.day  // 8 segments: ' + order),
+      panchangSpec("p.gowri_panchang.day  // 8 segments: " + order),
       gowri
     );
   }
@@ -1010,7 +1052,15 @@
     legend.appendChild(chip("good", "good hora"));
     legend.appendChild(chip("bad", "avoiding hora"));
     box.appendChild(legend);
-    section(view, "Hora (planetary hours)", box, panelSnippet(panchangCall(), "p.hora.day, p.hora.night"), hora);
+    section(
+      view,
+      "Hora (planetary hours)",
+      box,
+      panchangSpec("h.day, h.night", {
+        extract: { varName: "h", type: "Hora", value: "p.hora" },
+      }),
+      hora
+    );
   }
 
   function renderNallaNeram(view, windows) {
@@ -1027,7 +1077,7 @@
         })
       )
     );
-    section(view, "Nalla Neram", box, panelSnippet(panchangCall(), "p.nalla_neram"), windows);
+    section(view, "Nalla Neram", box, panchangSpec("p.nalla_neram"), windows);
   }
 
   var TYAJYAM_LABEL = {
@@ -1075,7 +1125,15 @@
     box.appendChild(
       table(["Avoid during", "From", "To"], rows.length ? rows : [["—", "—", "—"]])
     );
-    section(view, "Tyajyam (avoiding periods)", box, panelSnippet(panchangCall(), "p.tyajyam"), t);
+    section(
+      view,
+      "Tyajyam (avoiding periods)",
+      box,
+      panchangSpec("t", {
+        extract: { varName: "t", type: "Tyajyam", value: "p.tyajyam" },
+      }),
+      t
+    );
   }
 
   function renderDayGlance(view, p) {
@@ -1155,7 +1213,7 @@
     legend.appendChild(chip("good", "auspicious"));
     legend.appendChild(chip("bad", "inauspicious"));
     box.appendChild(legend);
-    section(view, "Day at a glance — all muhurta windows", box, panelSnippet(panchangCall(), "p.auspicious_timings + p.inauspicious_timings + p.gowri_panchang + p.hora + p.nalla_neram"), { auspicious_timings: p.auspicious_timings, inauspicious_timings: p.inauspicious_timings, gowri_panchang: p.gowri_panchang, hora: p.hora, nalla_neram: p.nalla_neram });
+    section(view, "Day at a glance — all muhurta windows", box, panchangSpec("p.auspicious_timings + p.inauspicious_timings + p.gowri_panchang + p.hora + p.nalla_neram"), { auspicious_timings: p.auspicious_timings, inauspicious_timings: p.inauspicious_timings, gowri_panchang: p.gowri_panchang, hora: p.hora, nalla_neram: p.nalla_neram });
   }
 
   // ───────────────────────────── kundali renderer ─────────────────────────
@@ -1191,7 +1249,7 @@
       ["Julian Day", b.julian_day],
       ["Ayanamsa", b.ayanamsa.toFixed(4) + "° (" + b.ayanamsa_label + ")"],
     ];
-    section(view, "Birth details", table(["Item", "Value"], bRows), chartCall(), c.birth);
+    section(view, "Birth details", table(["Item", "Value"], bRows), chartSpec(), c.birth);
 
     // 2 — planets
     var pRows = c.planets_data.map(function (pl) {
@@ -1227,7 +1285,7 @@
         flagCell,
       ];
     });
-    section(view, "Planets", table(["Planet", "House / sign", "Degree", "Longitude", "Nakshatra", "Special"], pRows), panelSnippet(chartCall(), "c.planets_data"), c.planets_data);
+    section(view, "Planets", table(["Planet", "House / sign", "Degree", "Longitude", "Nakshatra", "Special"], pRows), chartSpec("c.planets_data"), c.planets_data);
 
     // 3 — D1 chart (South Indian grid + wheel)
     renderD1(view, c);
@@ -1329,7 +1387,7 @@
       view,
       "D1 natal chart",
       box,
-      panelSnippet(chartCall(), "c.d1_chart, c.ascendant, c.planets_data"),
+      chartSpec("c.d1_chart, c.ascendant, c.planets_data"),
       c.d1_chart
     );
   }
@@ -1507,7 +1565,7 @@
       box.appendChild(el("p", "hint", "No divisional charts returned."));
     }
     box.appendChild(target);
-    section(view, "Divisional charts (D1 ⇄ D60)", box, panelSnippet(chartCall(), "c.vargas, c.varga_order"), { varga_order: c.varga_order, vargas: c.vargas });
+    section(view, "Divisional charts (D1 ⇄ D60)", box, chartSpec("c.vargas, c.varga_order"), { varga_order: c.varga_order, vargas: c.vargas });
   }
 
   function renderAshtakavarga(view, akv) {
@@ -1565,7 +1623,15 @@
       });
       sav.style.height = "200px";
     }
-    section(view, "Ashtakavarga", box, panelSnippet(chartCall(), "c.ashtakavarga.bav, c.ashtakavarga.sav"), akv);
+    section(
+      view,
+      "Ashtakavarga",
+      box,
+      chartSpec("ak.bav, ak.sav", {
+        extract: { varName: "ak", type: "AshtakavargaResult", value: "c.ashtakavarga" },
+      }),
+      akv
+    );
   }
 
   function renderDasha(view, dasha, antar) {
@@ -1633,7 +1699,7 @@
       }
     }
 
-    section(view, "Vimshottari dasha", box, panelSnippet(chartCall(), "c.dasha, c.dasha_antar"), { dasha: dasha, dasha_antar: antar });
+    section(view, "Vimshottari dasha", box, chartSpec("c.dasha, c.dasha_antar"), { dasha: dasha, dasha_antar: antar });
   }
 
   function renderKarakas(view, c) {
@@ -1653,7 +1719,7 @@
         ["Swamsa (own-sign placement)", c.swamsa],
       ]
     ));
-    section(view, "Jaimini karakas", box, panelSnippet(chartCall(), "c.karakas, c.karakamsa, c.swamsa"), { karakas: c.karakas, karakamsa: c.karakamsa, swamsa: c.swamsa });
+    section(view, "Jaimini karakas", box, chartSpec("c.karakas, c.karakamsa, c.swamsa"), { karakas: c.karakas, karakamsa: c.karakamsa, swamsa: c.swamsa });
   }
 
   function renderKalsarpa(view, s) {
@@ -1671,7 +1737,7 @@
         ]
       )
     );
-    section(view, "Kalsarpa dosha", box, panelSnippet(chartCall(), "c.kalsarpa"), s);
+    section(view, "Kalsarpa dosha", box, chartSpec("k.present", { extract: { varName: "k", type: "KalsarpaResult", value: "c.kalsarpa" } }), s);
   }
 
   function renderFriendships(view, f) {
@@ -1695,7 +1761,7 @@
       legend.appendChild(relChip(code));
     });
     box.appendChild(legend);
-    section(view, "Friendships", box, panelSnippet(chartCall(), "c.friendships.composite, c.friendships.natural"), f);
+    section(view, "Friendships", box, chartSpec("f.composite, f.natural", { extract: { varName: "f", type: "FriendshipTables", value: "c.friendships" } }), f);
   }
 
   function relChip(rel) {
@@ -1735,7 +1801,7 @@
         })
       )
     );
-    section(view, "Drishti (aspects)", box, panelSnippet(chartCall(), "c.drishti.aspects, c.drishti.mutual, c.drishti.by_planet"), d);
+    section(view, "Drishti (aspects)", box, chartSpec("d.aspects, d.mutual, d.by_planet", { extract: { varName: "d", type: "AspectResult", value: "c.drishti" } }), d);
   }
 
   // ───────────────────────────── wiring ───────────────────────────────────
@@ -1766,6 +1832,21 @@
       setTab("kundali");
       renderActive();
     });
+
+    $("#lang-ts").addEventListener("click", function () {
+      setLang("ts");
+    });
+    $("#lang-js").addEventListener("click", function () {
+      setLang("js");
+    });
+
+    document.querySelectorAll("[data-install]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        setInstallTab(b.getAttribute("data-install"));
+      });
+    });
+    $("#install-copy").addEventListener("click", copyInstall);
+    setInstallTab("npm");
   }
 
   function setTab(t) {
@@ -1774,6 +1855,121 @@
     $("#tab-kundali").classList.toggle("active", t === "kundali");
     $("#panchang-view").classList.toggle("hidden", t !== "panchang");
     $("#kundali-view").classList.toggle("hidden", t !== "kundali");
+  }
+
+  // swaps snippet text in place — never re-runs the WASM computation, and the
+  // page height is unchanged so there is no scroll jump
+  function applyLang() {
+    // the buttons report their state even when the composer failed to load, so a
+    // persisted `js` never renders as though TypeScript were still selected
+    var tsBtn = $("#lang-ts");
+    var jsBtn = $("#lang-js");
+    if (tsBtn) {
+      tsBtn.classList.toggle("active", state.lang === "ts");
+      tsBtn.setAttribute("aria-pressed", state.lang === "ts" ? "true" : "false");
+    }
+    if (jsBtn) {
+      jsBtn.classList.toggle("active", state.lang === "js");
+      jsBtn.setAttribute("aria-pressed", state.lang === "js" ? "true" : "false");
+    }
+    if (!snippets) return;
+    snippetRegistry.forEach(function (entry) {
+      var text = snippets.snippetFor(entry.spec, vpvVersion, state.lang);
+      entry.code.textContent = text;
+      entry.code.className = state.lang === "ts" ? "language-ts" : "language-javascript";
+      // hljs refuses to re-highlight an element it has already seen
+      delete entry.code.dataset.highlighted;
+      if (hljs) hljs.highlightElement(entry.code);
+    });
+  }
+
+  function setLang(lang) {
+    if (lang !== "ts" && lang !== "js") return;
+    state.lang = lang;
+    saveLang(lang);
+    applyLang();
+  }
+
+  // ───────────────────────────── invocation band ───────────────────────────
+
+  var installTab = "npm";
+
+  // the four tabs are not all shell: only npm is. the CDN tabs are JS module
+  // imports and the script tab is HTML, and hljs picks its highlighter (and its
+  // token classes) from this class alone
+  var INSTALL_LANG = {
+    npm: "language-bash",
+    jsdelivr: "language-javascript",
+    unpkg: "language-javascript",
+    script: "language-xml",
+  };
+
+  // one pending label reset at a time: rapid repeat clicks must revert the button
+  // 1200ms after the MOST RECENT copy, not after whichever click happened first
+  var installCopyTimer = null;
+
+  // Shown only when snippets.js failed to load. Deliberately a diagnostic, not a
+  // substitute: the CDN pins and the script tag are the composer's job, and
+  // vpvVersion is null in this state, so nothing version-specific may be baked in.
+  var INSTALL_HINT =
+    "Install snippets unavailable — snippets.js did not load.";
+
+  function renderInstall() {
+    var code = $("#install-code");
+    // unguarded snippets.installBlock() would throw on every tab switch and take
+    // the whole demo down with it, exactly as the section snippets did
+    var text = snippets
+      ? snippets.installBlock(installTab, vpvVersion)
+      : INSTALL_HINT;
+    code.textContent = text;
+    code.className = INSTALL_LANG[installTab] || "language-bash";
+    // hljs refuses to re-highlight an element it has already seen, and a tab
+    // switch is a re-render of the same node
+    delete code.dataset.highlighted;
+    if (hljs) hljs.highlightElement(code);
+  }
+
+  function setInstallTab(tab) {
+    installTab = tab;
+    document.querySelectorAll("[data-install]").forEach(function (b) {
+      var on = b.getAttribute("data-install") === tab;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    renderInstall();
+  }
+
+  function copyInstall() {
+    var btn = $("#install-copy");
+    // copied straight off the rendered node: it is what the user can see, and it
+    // keeps installBlock() from being called a second time on a click that can
+    // happen with the composer missing
+    var text = $("#install-code").textContent;
+    function done(label) {
+      btn.textContent = label;
+      if (installCopyTimer) clearTimeout(installCopyTimer);
+      installCopyTimer = setTimeout(function () {
+        installCopyTimer = null;
+        btn.textContent = "Copy";
+      }, 1200);
+    }
+    if (!navigator.clipboard || !navigator.clipboard.writeText) {
+      // select the text so the user can copy manually
+      var range = document.createRange();
+      range.selectNodeContents($("#install-code"));
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      return;
+    }
+    navigator.clipboard.writeText(text).then(
+      function () {
+        done("Copied");
+      },
+      function () {
+        done("Press ⌘C");
+      }
+    );
   }
 
   function collect() {
@@ -1872,6 +2068,7 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     bind();
+    applyLang();
     setTab(location.hash === "#kundali" ? "kundali" : "panchang");
     renderActive();
 

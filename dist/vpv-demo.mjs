@@ -8563,8 +8563,75 @@ async function computeChart(birthInfo, locale4 = "en") {
   }
 }
 
+// package.json
+var package_default = {
+  name: "vpv-panchangam",
+  version: "0.4.0",
+  description: "Vedic Panchanga and Kundali calculator for Node.js",
+  main: "dist/index.js",
+  types: "dist/index.d.ts",
+  files: [
+    "dist/"
+  ],
+  scripts: {
+    build: "tsc",
+    "build:browser": "esbuild src/index.ts --bundle --format=esm --platform=browser --outfile=dist/browser/vpv-panchangam.mjs --external:node:* && node scripts/copy-wasm.cjs dist/browser",
+    "verify:browser": "npm run build:browser && node scripts/verify-browser-build.mjs",
+    test: "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    lint: "eslint src/",
+    format: "prettier --write src/ test/",
+    "format:check": "prettier --check src/ test/",
+    prepublishOnly: "npm run build && npm run build:browser",
+    "example:build": "esbuild example/entry.ts --bundle --format=esm --platform=browser --outfile=example/dist/vpv-demo.mjs --external:node:* && node scripts/copy-wasm.cjs example/dist",
+    demo: "npm run example:build && node example/serve.js",
+    "demo:watch": "node scripts/copy-wasm.cjs example/dist && (esbuild example/entry.ts --bundle --format=esm --platform=browser --outfile=example/dist/vpv-demo.mjs --external:node:* --watch & node example/serve.js)",
+    "bump:major": "npm version major",
+    "bump:minor": "npm version minor"
+  },
+  repository: {
+    type: "git",
+    url: "git+https://github.com/reflexdemon/vpv-panchangam.git"
+  },
+  bugs: {
+    url: "https://github.com/reflexdemon/vpv-panchangam/issues"
+  },
+  homepage: "https://github.com/reflexdemon/vpv-panchangam#readme",
+  keywords: [
+    "vedic",
+    "panchang",
+    "panchangam",
+    "jyotish",
+    "astrology",
+    "kundali",
+    "horoscope",
+    "dasha",
+    "nakshatra",
+    "tithi",
+    "swisseph"
+  ],
+  license: "MIT",
+  engines: {
+    node: ">=20"
+  },
+  dependencies: {
+    "@swisseph/browser": "^1.3.1"
+  },
+  devDependencies: {
+    "@types/node": "^20.14.0",
+    "@vitest/coverage-v8": "^2.1.9",
+    esbuild: "^0.21.5",
+    eslint: "^9.0.0",
+    prettier: "^3.3.0",
+    typescript: "^5.5.0",
+    vitest: "^2.0.0"
+  }
+};
+
 // example/entry.ts
 var vpv = {
+  version: package_default.version,
   computeDetailedPanchang,
   computeChart,
   PanchangError,
