@@ -15,6 +15,7 @@
   <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/highlight.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/languages/typescript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/languages/javascript.min.js"></script>
   <script src="./snippets.js"></script>
   <style>
     :root {
@@ -93,6 +94,19 @@
       border-bottom-color: var(--bg);
       box-shadow: inset 0 -2px 0 var(--accent);
     }
+    .top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    .lang-toggle { display: flex; gap: 6px; flex-shrink: 0; }
+    .lang-toggle button {
+      border: 1px solid #3d444d;
+      background: transparent;
+      color: #f0f6fc;
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .lang-toggle button.active { background: #0969da; border-color: #0969da; }
     .view { padding: 16px 24px 48px; max-width: 1080px; margin: 0 auto; }
     .hidden { display: none; }
     #error-banner {
@@ -214,10 +228,18 @@
 </head>
 <body>
   <header class="top">
-    <h1>vpv-panchangam — interactive demo</h1>
-    <div class="tag">
-      Every feature of the library, driven from the browser build. Exact-input
-      TypeScript snippets are shown next to each feature.
+    <div class="top-row">
+      <div>
+        <h1>vpv-panchangam — interactive demo</h1>
+        <div class="tag">
+          Every feature of the library, driven from the browser build. Exact-input
+          snippets are shown next to each feature, in TypeScript or JavaScript.
+        </div>
+      </div>
+      <div class="lang-toggle" role="group" aria-label="Snippet language">
+        <button type="button" id="lang-ts" class="active">TypeScript</button>
+        <button type="button" id="lang-js">JavaScript</button>
+      </div>
     </div>
   </header>
 

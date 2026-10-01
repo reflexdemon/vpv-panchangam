@@ -21,7 +21,25 @@
     tz: "Asia/Kolkata",
     ayanamsa: "lahiri",
     locale: "en",
+    lang: readLang(),
   };
+
+  // localStorage throws in some privacy modes; fall back to the default
+  function readLang() {
+    try {
+      return localStorage.getItem("vpv-demo-lang") === "js" ? "js" : "ts";
+    } catch (e) {
+      return "ts";
+    }
+  }
+
+  function saveLang(lang) {
+    try {
+      localStorage.setItem("vpv-demo-lang", lang);
+    } catch (e) {
+      /* in-memory only for this session */
+    }
+  }
 
   // ───────────────────────────── dom helpers ──────────────────────────────
 
@@ -92,8 +110,8 @@
     if (content) sec.appendChild(content);
     if (spec && snippets) {
       var pre = el("pre", "code-block");
-      var code = el("code", "language-ts");
-      code.textContent = snippets.snippetFor(spec, vpvVersion, "ts");
+      var code = el("code", state.lang === "ts" ? "language-ts" : "language-javascript");
+      code.textContent = snippets.snippetFor(spec, vpvVersion, state.lang);
       // tag input shown even if a CDN loaded hljs
       pre.classList.add("hli");
       pre.appendChild(code);
@@ -1809,6 +1827,13 @@
       setTab("kundali");
       renderActive();
     });
+
+    $("#lang-ts").addEventListener("click", function () {
+      setLang("ts");
+    });
+    $("#lang-js").addEventListener("click", function () {
+      setLang("js");
+    });
   }
 
   function setTab(t) {
@@ -1817,6 +1842,31 @@
     $("#tab-kundali").classList.toggle("active", t === "kundali");
     $("#panchang-view").classList.toggle("hidden", t !== "panchang");
     $("#kundali-view").classList.toggle("hidden", t !== "kundali");
+  }
+
+  // swaps snippet text in place — never re-runs the WASM computation, and the
+  // page height is unchanged so there is no scroll jump
+  function applyLang() {
+    if (!snippets) return;
+    snippetRegistry.forEach(function (entry) {
+      var text = snippets.snippetFor(entry.spec, vpvVersion, state.lang);
+      entry.code.textContent = text;
+      entry.code.className = state.lang === "ts" ? "language-ts" : "language-javascript";
+      // hljs refuses to re-highlight an element it has already seen
+      delete entry.code.dataset.highlighted;
+      if (hljs) hljs.highlightElement(entry.code);
+    });
+    var tsBtn = $("#lang-ts");
+    var jsBtn = $("#lang-js");
+    if (tsBtn) tsBtn.classList.toggle("active", state.lang === "ts");
+    if (jsBtn) jsBtn.classList.toggle("active", state.lang === "js");
+  }
+
+  function setLang(lang) {
+    if (lang !== "ts" && lang !== "js") return;
+    state.lang = lang;
+    saveLang(lang);
+    applyLang();
   }
 
   function collect() {
@@ -1915,6 +1965,7 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     bind();
+    applyLang();
     setTab(location.hash === "#kundali" ? "kundali" : "panchang");
     renderActive();
 
