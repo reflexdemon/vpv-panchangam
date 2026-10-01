@@ -9,6 +9,7 @@
   var vpv = window.vpv;
   var echarts = window.echarts;
   var hljs = window.hljs;
+  var snippets = window.vpvSnippets;
 
   // ───────────────────────────── global state ─────────────────────────────
 
@@ -89,7 +90,7 @@
     var sec = el("section", "card");
     sec.appendChild(el("h3", "section-title", title));
     if (content) sec.appendChild(content);
-    if (spec) {
+    if (spec && snippets) {
       var pre = el("pre", "code-block");
       var code = el("code", "language-ts");
       code.textContent = snippets.snippetFor(spec, vpvVersion, "ts");
@@ -587,8 +588,10 @@
 
   // ───────────────────────────── snippet specs ─────────────────────────────
 
-  var snippets = window.vpvSnippets;
-  var vpvVersion = snippets.version(vpv);
+  // snippets.js is local, but a failed load must not take the whole demo down —
+  // section() skips the code blocks instead, so the version is only needed
+  // when the composer is actually there
+  var vpvVersion = snippets ? snippets.version(vpv) : null;
 
   // bare call arguments — the `const … = await …` declaration is the spec's job
   function panchangArgs() {
