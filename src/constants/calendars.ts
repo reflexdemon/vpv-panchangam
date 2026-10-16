@@ -73,7 +73,7 @@ export const CHANDRA_MASA_BY_SUNSIGN = [
   "Ashadha",
   "Shravana",
   "Bhadrapada",
-  "Ashwin",
+  "Ashwina",
   "Kartika",
   "Margashirsha",
   "Pausha",

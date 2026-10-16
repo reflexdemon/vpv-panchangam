@@ -226,7 +226,7 @@ function getNirayanaSolarMonth(sunSignIdx: number): string {
     "Ashadha",
     "Shravana",
     "Bhadrapada",
-    "Ashwin",
+    "Ashwina",
     "Kartika",
     "Margashirsha",
     "Pausha",
