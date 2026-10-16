@@ -61,6 +61,59 @@ export function dateToJd(
   return ephe.julday(year, month, day, 12.0);
 }
 
+const TROP_FLAGS = () => SE.FLG_SWIEPH | SE.FLG_SPEED;
+
+export function elongationAt(jd: number, ephe: EphemerisService): number {
+  const s = ephe.calcUt(jd, SE.SUN, TROP_FLAGS()).lon;
+  const m = ephe.calcUt(jd, SE.MOON, TROP_FLAGS()).lon;
+  return (((m - s) % 360) + 360) % 360;
+}
+
+/** JD of the last new moon (elongation 0°) at or before `jd`. */
+export function lastNewMoonBefore(jd: number, ephe: EphemerisService): number {
+  let hi = jd;
+  for (let i = 0; i < 35; i++) {
+    const lo = hi - 1;
+    if (elongationAt(lo, ephe) > elongationAt(hi, ephe)) {
+      return findAngleTime(lo, hi, 0, (t) => elongationAt(t, ephe)) ?? hi;
+    }
+    hi = lo;
+  }
+  return jd - 29.530588;
+}
+
+/** Sidereral Sun enters `signId` (1=Aries..12=Pisces) — the sankranti nearest the 1st of `month`. */
+function sankrantiInMonth(
+  year: number,
+  month: number,
+  signId: number,
+  ephe: EphemerisService,
+): number {
+  const lo = dateToJd(year, month, 1, ephe) - 5;
+  const hi = dateToJd(year, month, 28, ephe) + 5;
+  const target = (signId - 1) * 30;
+  return (
+    findAngleTime(
+      lo,
+      hi,
+      target,
+      (t) => ephe.calcUt(t, SE.SUN, SIDEREAL_FLAGS()).lon,
+    ) ?? dateToJd(year, month, 15, ephe)
+  );
+}
+
+/** Chaitra Shukla Pratipada instant for the Shaka year that begins in Gregorian `year`. */
+export function chaitraShukla1Jd(year: number, ephe: EphemerisService): number {
+  const mesha = sankrantiInMonth(year, 4, 1, ephe); // Sun enters Aries in April
+  return lastNewMoonBefore(mesha, ephe);
+}
+
+/** Kartik Shukla Pratipada instant (≈ Diwali) in Gregorian `year`. */
+export function kartikShukla1Jd(year: number, ephe: EphemerisService): number {
+  const vrischika = sankrantiInMonth(year, 11, 8, ephe); // Sun enters Scorpio in November
+  return lastNewMoonBefore(vrischika, ephe);
+}
+
 /**
  * Compute all calendar values for a given Julian Day (at sunrise, noon, or any UT).
  */
