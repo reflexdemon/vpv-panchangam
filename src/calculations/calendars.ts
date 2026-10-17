@@ -12,7 +12,6 @@ import {
   SIGN_TO_DRIK_RITU,
   SIGN_TO_VEDIC_RITU,
   UTTARAYANA_SIGNS,
-  CHANDRA_MASA_BY_SUNSIGN,
   AMANTA_MONTHS,
   NATIONAL_CIVIL_MONTHS,
 } from "../constants/calendars";
@@ -135,17 +134,18 @@ export function computeCalendars(
 
   // Kali Ahargana: elapsed days from Kali epoch
   const kaliAhargana = Math.floor(jd - KALI_START_JD);
-  // Kali year (approximate): elapsed since 3102 BCE
-  const kaliYear = Math.floor(kaliAhargana / 365.25) + 1;
 
-  // Shaka Samvat: tropical year CE − 78 for Mesha ingress
-  // Simplified: Shaka = CE year − 78 (before Mesha) or CE year − 77 (after)
-  const [gregYear, gregMonth, gregDay, gregHour] = ephe.revjul(jd);
-  const afterMeshaIngress = sunLon >= 0; // Sun past 0° sidereal Aries
-  const shakaYear = gregYear - (afterMeshaIngress ? 77 : 78);
+  // Shaka year increments on Chaitra Shukla Pratipada (the new moon before the
+  // Mesha sankranti), not at Mesha ingress.
+  const [gregYear] = ephe.revjul(jd);
+  const chaitraThis = chaitraShukla1Jd(gregYear, ephe);
+  const shakaYear = jd >= chaitraThis ? gregYear - 78 : gregYear - 79;
 
-  // Vikram Samvat: Shaka + 135
+  // Vikram Samvat = Shaka + 135
   const vikramYear = shakaYear + 135;
+
+  // Kali year = Shaka + 3179
+  const kaliYear = shakaYear + 3179;
 
   // Gujarati Samvat: Vikram − 1 (new year is Kartik Shukla Pratipada)
   const gujaratiYear = vikramYear - 1;

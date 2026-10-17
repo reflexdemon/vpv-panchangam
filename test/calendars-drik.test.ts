@@ -55,4 +55,46 @@ describe("drik lunar-month anchors", () => {
       });
     }
   });
+
+  describe("Shaka/Vikram/Kali follow Chaitra Shukla Pratipada", () => {
+    // drik fixture ground truth for new-delhi. Eras are location-independent,
+    // so New Delhi stands in for every fixture location.
+    const cases: Array<[string, number, number, number]> = [
+      ["2026-01-15", 1947, 2082, 5126],
+      ["2026-03-18", 1947, 2082, 5126],
+      ["2026-03-19", 1948, 2083, 5127],
+      ["2026-04-14", 1948, 2083, 5127],
+      ["2026-10-16", 1948, 2083, 5127],
+      ["2026-11-09", 1948, 2083, 5127],
+      // Before that year's Chaitra Shukla 1 (2027-03-19): still the prior year.
+      ["2027-02-01", 1948, 2083, 5127],
+    ];
+
+    for (const [date, shaka, vikram, kali] of cases) {
+      it(`${date} → Shaka ${shaka}, Vikram ${vikram}, Kali ${kali}`, async () => {
+        const p = await computeDetailedPanchang(
+          date,
+          NEW_DELHI.lat,
+          NEW_DELHI.lon,
+          NEW_DELHI.tz,
+          "en",
+        );
+        expect(p.lunar_month.shaka_samvat).toBe(shaka);
+        expect(p.lunar_month.vikram_samvat).toBe(vikram);
+        expect(p.calendars.kali_year).toBe(kali);
+      });
+    }
+
+    it("samvatsara names follow the corrected years on 2026-10-16", async () => {
+      const p = await computeDetailedPanchang(
+        "2026-10-16",
+        NEW_DELHI.lat,
+        NEW_DELHI.lon,
+        NEW_DELHI.tz,
+        "en",
+      );
+      expect(p.lunar_month.samvatsara_shaka).toBe("Parabhava");
+      expect(p.lunar_month.samvatsara_vikram).toBe("Siddharthi");
+    });
+  });
 });
