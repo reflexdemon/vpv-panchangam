@@ -13,9 +13,10 @@ import {
   SIGN_TO_VEDIC_RITU,
   UTTARAYANA_SIGNS,
   CHANDRA_MASA_BY_SUNSIGN,
+  AMANTA_MONTHS,
   NATIONAL_CIVIL_MONTHS,
 } from "../constants/calendars";
-import { signIdFromLon } from "./panchang";
+import { signIdFromLon, tithiIndex } from "./panchang";
 
 const SIDEREAL_FLAGS = () => SE.FLG_SWIEPH | SE.FLG_SPEED | SE.FLG_SIDEREAL;
 
@@ -161,10 +162,25 @@ export function computeCalendars(
   const sunSignId = signIdFromLon(sunLon); // 1-12
   const niraayanaSolarMonth = getNirayanaSolarMonth(sunSignId - 1); // 0-based
 
-  // Chandramasa (lunar month) from Sun sign
-  const chandramasaAmanta = CHANDRA_MASA_BY_SUNSIGN[(sunSignId - 1 + 12) % 12];
-  // Purnimanta is one month ahead
-  const chandramasaPurnimanta = CHANDRA_MASA_BY_SUNSIGN[sunSignId % 12];
+  // Amanta lunar month = the month begun by the last new moon before sunrise,
+  // named by the Sun's sidereal sign at that new moon (Meena → Chaitra).
+  // Purnimanta = amanta during Shukla paksha, next month during Krishna paksha.
+  // The paksha is taken at sunrise (the panchang day boundary): the noon tithi
+  // can differ, e.g. 2026-03-19 where Amavasya ends 06:52 after sunrise 06:26.
+  const lastNm = lastNewMoonBefore(sunriseJd, ephe);
+  const sunSignAtNm = signIdFromLon(
+    ephe.calcUt(lastNm, SE.SUN, SIDEREAL_FLAGS()).lon,
+  ); // 1..12
+  const amantaIdx = sunSignAtNm % 12;
+  const chandramasaAmanta = AMANTA_MONTHS[amantaIdx];
+  const tithiIdxAtSunrise = tithiIndex(
+    ephe.calcUt(sunriseJd, SE.SUN, SIDEREAL_FLAGS()).lon,
+    ephe.calcUt(sunriseJd, SE.MOON, SIDEREAL_FLAGS()).lon,
+  );
+  const chandramasaPurnimanta =
+    tithiIdxAtSunrise <= 15
+      ? chandramasaAmanta
+      : AMANTA_MONTHS[(amantaIdx + 1) % 12];
 
   // Paksha
   const paksha = tithiIdx <= 15 ? "Shukla Paksha" : "Krishna Paksha";

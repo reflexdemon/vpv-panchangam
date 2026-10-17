@@ -82,6 +82,14 @@ export const CHANDRA_MASA_BY_SUNSIGN = [
   "Chaitra",
 ];
 
+// Amanta lunar months ordered Chaitra..Phalguna (index 0 = Chaitra). Derived
+// from CHANDRA_MASA_BY_SUNSIGN so the existing string spellings ("Ashwina") are
+// preserved. Index = Sun's sidereal sign at the new moon, mod 12 (Meena → Chaitra).
+export const AMANTA_MONTHS = [
+  CHANDRA_MASA_BY_SUNSIGN[11], // Chaitra (Sun in Meena at the new moon)
+  ...CHANDRA_MASA_BY_SUNSIGN.slice(0, 11), // Vaishakha .. Phalguna
+];
+
 // Sign → Drik Ritu (tropical-based)
 export const SIGN_TO_DRIK_RITU: Record<number, string> = {
   1: "Vasant",
