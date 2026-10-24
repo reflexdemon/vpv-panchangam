@@ -62,6 +62,7 @@ const locale: LocaleTable = {
     "Ekadashi",
     "Dwadashi",
     "Trayodashi",
+    "Chaturdashi",
     "Amavasya",
   ],
   rashis: [
