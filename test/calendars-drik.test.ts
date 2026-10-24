@@ -8,6 +8,8 @@ import {
 
 // New Delhi coordinates from the committed drik fixture manifest.
 const NEW_DELHI = { lat: 28.6139, lon: 77.209, tz: "Asia/Kolkata" };
+// London coordinates — used for the location-dependent Gujarati boundary day.
+const LONDON = { lat: 51.5074, lon: -0.1278, tz: "Europe/London" };
 
 describe("drik lunar-month anchors", () => {
   let ephe: EphemerisService;
@@ -95,6 +97,46 @@ describe("drik lunar-month anchors", () => {
       );
       expect(p.lunar_month.samvatsara_shaka).toBe("Parabhava");
       expect(p.lunar_month.samvatsara_vikram).toBe("Siddharthi");
+    });
+  });
+
+  describe("Gujarati Samvat rolls at Kartik Shukla Pratipada", () => {
+    // drik fixtures. 2026-11-09 is the new-year boundary day and is
+    // location-dependent (see the split test below). Verified against the
+    // committed fixture pages.
+    const cases: Array<[string, number]> = [
+      ["2026-01-15", 2082],
+      ["2026-02-01", 2082],
+      ["2026-03-18", 2082],
+      ["2026-03-19", 2082],
+      ["2026-04-14", 2082],
+      ["2026-10-16", 2082],
+      ["2026-11-09", 2082],
+      ["2027-01-15", 2083],
+    ];
+
+    for (const [date, gujarati] of cases) {
+      it(`${date} → Gujarati ${gujarati}`, async () => {
+        const p = await computeDetailedPanchang(
+          date,
+          NEW_DELHI.lat,
+          NEW_DELHI.lon,
+          NEW_DELHI.tz,
+          "en",
+        );
+        expect(p.lunar_month.gujarati_samvat).toBe(gujarati);
+      });
+    }
+
+    it("splits by location on 2026-11-09 (sunrise vs the 07:02 UT new moon)", async () => {
+      const london = await computeDetailedPanchang(
+        "2026-11-09",
+        LONDON.lat,
+        LONDON.lon,
+        LONDON.tz,
+        "en",
+      );
+      expect(london.lunar_month.gujarati_samvat).toBe(2083);
     });
   });
 

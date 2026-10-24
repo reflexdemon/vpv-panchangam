@@ -147,8 +147,19 @@ export function computeCalendars(
   // Kali year = Shaka + 3179
   const kaliYear = shakaYear + 3179;
 
-  // Gujarati Samvat: Vikram − 1 (new year is Kartik Shukla Pratipada)
-  const gujaratiYear = vikramYear - 1;
+  // Gujarati Samvat = Vikram − 1 between Chaitra Shukla 1 and Kartik Shukla 1; else Vikram.
+  // The Chaitra end of that window tracks the Shaka/Vikram roll (the new-moon
+  // date, compared against `jd` above). The Kartik new year (Bestu Varas) is the
+  // day Kartik Shukla Pratipada is current at **sunrise** — the panchang day
+  // boundary — which is why Gujarati is location-dependent on the boundary day
+  // (e.g. 2026-11-09: Delhi/Chennai sunrise precedes the 07:02 UT new moon → 2082;
+  // London sunrise follows it → 2083).
+  const chaitraPrev = chaitraShukla1Jd(gregYear - 1, ephe);
+  const kartikThis = kartikShukla1Jd(gregYear, ephe);
+  const kartikPrev = kartikShukla1Jd(gregYear - 1, ephe);
+  const lastChaitra = jd >= chaitraThis ? chaitraThis : chaitraPrev;
+  const lastKartik = sunriseJd >= kartikThis ? kartikThis : kartikPrev;
+  const gujaratiYear = lastChaitra > lastKartik ? vikramYear - 1 : vikramYear;
 
   // Samvatsara (60-year cycle)
   // Shaka samvatsara = (shaka_year + 11) % 60
