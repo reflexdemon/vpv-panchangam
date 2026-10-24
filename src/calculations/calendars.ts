@@ -194,7 +194,7 @@ export function computeCalendars(
       : AMANTA_MONTHS[(amantaIdx + 1) % 12];
 
   // Paksha
-  const paksha = tithiIdx <= 15 ? "Shukla Paksha" : "Krishna Paksha";
+  const paksha = tithiIdxAtSunrise <= 15 ? "Shukla Paksha" : "Krishna Paksha";
 
   // Pravishte days: days elapsed since new moon / full moon
   const pravishteDays = tithiIdx <= 15 ? tithiIdx : tithiIdx - 15;

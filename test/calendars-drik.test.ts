@@ -249,4 +249,20 @@ describe("drik lunar-month anchors", () => {
       }
     });
   });
+
+  describe("paksha derived from sunrise tithi", () => {
+    for (const date of ["2026-03-18", "2026-03-19", "2026-11-09"]) {
+      it(`${date} panchang.paksha and lunar_month.paksha agree as Krishna Paksha`, async () => {
+        const p = await computeDetailedPanchang(
+          date,
+          NEW_DELHI.lat,
+          NEW_DELHI.lon,
+          NEW_DELHI.tz,
+          "en",
+        );
+        expect(p.panchang.paksha).toBe("Krishna Paksha");
+        expect(p.lunar_month.paksha).toBe("Krishna Paksha");
+      });
+    }
+  });
 });

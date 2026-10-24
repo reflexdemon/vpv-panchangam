@@ -259,7 +259,7 @@ export async function computeDetailedPanchang(
     );
 
     // ── Paksha ───────────────────────────────────────────────────────────────
-    const tIdx = tithiIndex(sunLon, moonLon);
+    const tIdx = tithiNow?.index ?? tithiIndex(sunLon, moonLon);
     const paksha = tIdx <= 15 ? "Shukla Paksha" : "Krishna Paksha";
 
     // ── Muhurta windows ───────────────────────────────────────────────────────

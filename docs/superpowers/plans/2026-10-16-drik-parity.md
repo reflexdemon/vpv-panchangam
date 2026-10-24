@@ -93,7 +93,7 @@ Reference comparison for `2026-10-16`, Suwanee GA (34.0514 N, −84.0711 W, `Ame
 **Files:**
 - Create: `test/fixtures/drik/manifest.json`
 
-- [ ] Add a manifest listing the matrix. Locations must be addressed by drik geoname-id (drik has no lat/lon URL form that survived probing):
+- [x] Add a manifest listing the matrix. Locations must be addressed by drik geoname-id (drik has no lat/lon URL form that survived probing):
 
 ```json
 {
@@ -110,16 +110,16 @@ Reference comparison for `2026-10-16`, Suwanee GA (34.0514 N, −84.0711 W, `Ame
 }
 ```
 
-- [ ] Resolve the Suwanee geoname-id empirically: fetch `.../day-panchang.html?geoname-id=<candidate>&date=16/10/2026`, extract the `<title>`/H1, and pick the id whose page title resolves to Suwanee, Georgia. Record it in the manifest. (Candidate `4229956` returned a page whose varjyam matched New Delhi — treat it as wrong until the title proves otherwise.)
-- [ ] Verify each location's resolved name by asserting the page H1 contains the expected city before capture (the capture script enforces this).
-- [ ] Commit: `test(drik): add drik fixture capture manifest`.
+- [x] Resolve the Suwanee geoname-id empirically: fetch `.../day-panchang.html?geoname-id=<candidate>&date=16/10/2026`, extract the `<title>`/H1, and pick the id whose page title resolves to Suwanee, Georgia. Record it in the manifest. (Candidate `4229956` returned a page whose varjyam matched New Delhi — treat it as wrong until the title proves otherwise.)
+- [x] Verify each location's resolved name by asserting the page H1 contains the expected city before capture (the capture script enforces this).
+- [x] Commit: `test(drik): add drik fixture capture manifest`.
 
 ### Task 0.2: Write the capture + parse script
 
 **Files:**
 - Create: `scripts/capture-drik-fixtures.mjs`
 
-- [ ] Implement the fetcher with a browser User-Agent and a politeness delay (≥1.5 s between requests), and a hard cap on requests per run. Reuse a single run to fetch everything in the matrix. Do **not** use `curl` (403).
+- [x] Implement the fetcher with a browser User-Agent and a politeness delay (≥1.5 s between requests), and a hard cap on requests per run. Reuse a single run to fetch everything in the matrix. Do **not** use `curl` (403).
 
 ```js
 // scripts/capture-drik-fixtures.mjs  (capture tooling — never run by `npm test`)
@@ -142,7 +142,7 @@ function stripTags(html) {
 }
 ```
 
-- [ ] Implement `parseDrikPage(html, { timezone })`, returning the reference object below. Use **label → following text** extraction on the tag-stripped string, taking the *last* occurrence of the label (the nav menu repeats several labels). Times are `h:mm AM/PM` in the page's local tz; store both the raw string and `localISO` (`2026-10-16T15:47:00`).
+- [x] Implement `parseDrikPage(html, { timezone })`, returning the reference object below. Use **label → following text** extraction on the tag-stripped string, taking the *last* occurrence of the label (the nav menu repeats several labels). Times are `h:mm AM/PM` in the page's local tz; store both the raw string and `localISO` (`2026-10-16T15:47:00`).
 
 ```ts
 interface DrikReference {
@@ -169,19 +169,19 @@ interface DrikReference {
 }
 ```
 
-- [ ] A window string may carry a rollover date, e.g. `"10:29 PM to 12:17 AM , Oct 17"`. Normalise to `{ start: "22:29", end: "00:17+1" }` (or store the raw and parse in `test/drik-helpers.ts`). Capture **all** windows for `varjyam`, `amritKalam`, `durMuhurtam` (drik can list more than one).
-- [ ] Write one file per page at `test/fixtures/drik/pages/<slug>-<YYYY-MM-DD>.json` and stamp `manifest.json` `capturedAt`.
-- [ ] Commit: `feat(drik): add drik day-panchang capture/parse script`.
+- [x] A window string may carry a rollover date, e.g. `"10:29 PM to 12:17 AM , Oct 17"`. Normalise to `{ start: "22:29", end: "00:17+1" }` (or store the raw and parse in `test/drik-helpers.ts`). Capture **all** windows for `varjyam`, `amritKalam`, `durMuhurtam` (drik can list more than one).
+- [x] Write one file per page at `test/fixtures/drik/pages/<slug>-<YYYY-MM-DD>.json` and stamp `manifest.json` `capturedAt`.
+- [x] Commit: `feat(drik): add drik day-panchang capture/parse script`.
 
 ### Task 0.3: Capture and commit fixtures
 
 **Files:**
 - Create: `test/fixtures/drik/pages/*.json`, update `test/fixtures/drik/manifest.json`
 
-- [ ] Run: `node scripts/capture-drik-fixtures.mjs` (≈30 pages: 5 locations × 6 dates; ~90 s with spacing).
-- [ ] Sanity-check the output: for `new-delhi` / `2026-10-16` assert `shakaSamvat === 1948`, `chandramasaAmanta === "Ashwina"`, `chandramasaPurnimanta === "Ashwina"`, `kaliyugaYears === 5127`, `brahmaMuhurta === "04:42 AM to 05:32 AM"`. For `new-delhi` / `2026-03-18` assert `vikramSamvat === 2082`, and `2026-03-19` assert `2083`.
-- [ ] **Committed artifacts are JSON only.** Confirm no `.html` is staged (`git status`).
-- [ ] Commit: `test(drik): capture 2026 reference matrix from drikpanchang`.
+- [x] Run: `node scripts/capture-drik-fixtures.mjs` (≈30 pages: 5 locations × 6 dates; ~90 s with spacing).
+- [x] Sanity-check the output: for `new-delhi` / `2026-10-16` assert `shakaSamvat === 1948`, `chandramasaAmanta === "Ashwina"`, `chandramasaPurnimanta === "Ashwina"`, `kaliyugaYears === 5127`, `brahmaMuhurta === "04:42 AM to 05:32 AM"`. For `new-delhi` / `2026-03-18` assert `vikramSamvat === 2082`, and `2026-03-19` assert `2083`.
+- [x] **Committed artifacts are JSON only.** Confirm no `.html` is staged (`git status`).
+- [x] Commit: `test(drik): capture 2026 reference matrix from drikpanchang`.
 
 > **Fixture budget note:** this is ~30 pages, matching the approved estimate. Phase 4 (varjyam/amrit) may need a **full nakshatra sweep** (New Delhi, 2026-10-01..10-31, 31 pages). Add it in Task 4.3 only if the fit needs it, and re-confirm with the user before expanding the capture.
 
@@ -191,14 +191,14 @@ interface DrikReference {
 - Create: `test/drik-helpers.ts`
 - Create: `test/drik-parity.test.ts`
 
-- [ ] In `test/drik-helpers.ts` export `loadFixtures()` (reads `manifest.json` + pages), `localHm(isoUtc, tz)` (→ `"HH:MM"`), `localDay(isoUtc, tz)` (→ `"YYYY-MM-DD"`), `parseWindow(raw, tz, date)` (→ `{ startUtc, endUtc }`), and `minuteDelta(a, b)`.
-- [ ] Write the suite: for each fixture, call
+- [x] In `test/drik-helpers.ts` export `loadFixtures()` (reads `manifest.json` + pages), `localHm(isoUtc, tz)` (→ `"HH:MM"`), `localDay(isoUtc, tz)` (→ `"YYYY-MM-DD"`), `parseWindow(raw, tz, date)` (→ `{ startUtc, endUtc }`), and `minuteDelta(a, b)`.
+- [x] Write the suite: for each fixture, call
   `computeDetailedPanchang(date, lat, lon, tz, "en")` and assert the fields below. Introduce a module-level `const TOL_MIN = 1` and a helper `expectHm(actualIso, expectedRaw, tz)` that compares wall-clock `HH:MM` with a `TOL_MIN` minute tolerance, rolling a `+1 day` marker when the fixture window crosses midnight.
-- [ ] Fields asserted strictly (exact): `panchang.paksha`, `lunar_month.chandramasa_amanta`, `lunar_month.chandramasa_purnimanta`, `lunar_month.shaka_samvat`, `lunar_month.vikram_samvat`, `lunar_month.gujarati_samvat`, `lunar_month.samvatsara_shaka`, `lunar_month.samvatsara_vikram`, `calendars.kali_year`, `panchang.tithi.name`, `panchang.nakshatra.name`, `panchang.yoga.name`, `panchang.karana.name`, `vara`.
-- [ ] Fields asserted with `TOL_MIN`-minute tolerance: `sun_moon.sunrise/sunset/moonrise/moonset`, all single windows, all array windows (compare as ordered sets by start time).
-- [ ] At this point the suite **fails** on the mismatched fields. That is the target. To keep `main` green while tasks land, gate the not-yet-fixed assertions with `it.todo` and flip each to `it` in its phase. Do not delete assertions.
-- [ ] Fold `moonrise`/`moonset` into a `describe` tagged with `it` but **not** part of any release gate (comment this explicitly in the file).
-- [ ] Commit: `test(drik): add offline drik parity harness`.
+- [x] Fields asserted strictly (exact): `panchang.paksha`, `lunar_month.chandramasa_amanta`, `lunar_month.chandramasa_purnimanta`, `lunar_month.shaka_samvat`, `lunar_month.vikram_samvat`, `lunar_month.gujarati_samvat`, `lunar_month.samvatsara_shaka`, `lunar_month.samvatsara_vikram`, `calendars.kali_year`, `panchang.tithi.name`, `panchang.nakshatra.name`, `panchang.yoga.name`, `panchang.karana.name`, `vara`.
+- [x] Fields asserted with `TOL_MIN`-minute tolerance: `sun_moon.sunrise/sunset/moonrise/moonset`, all single windows, all array windows (compare as ordered sets by start time).
+- [x] At this point the suite **fails** on the mismatched fields. That is the target. To keep `main` green while tasks land, gate the not-yet-fixed assertions with `it.todo` and flip each to `it` in its phase. Do not delete assertions.
+- [x] Fold `moonrise`/`moonset` into a `describe` tagged with `it` but **not** part of any release gate (comment this explicitly in the file).
+- [x] Commit: `test(drik): add offline drik parity harness`.
 
 ---
 
@@ -210,7 +210,7 @@ interface DrikReference {
 - Modify: `src/calculations/calendars.ts`
 - Test: `test/calendars-drik.test.ts` (new)
 
-- [ ] Add helpers (module-private unless a test needs them):
+- [x] Add helpers (module-private unless a test needs them):
 
 ```ts
 const TROP_FLAGS = () => SE.FLG_SWIEPH | SE.FLG_SPEED;
@@ -251,9 +251,9 @@ export function kartikShukla1Jd(year: number, ephe: EphemerisService): number {
 }
 ```
 
-- [ ] Test (`test/calendars-drik.test.ts`): for `2026`, assert `chaitraShukla1Jd(2026)` lands on **2026-03-19** local IST (the new moon ends ~06:52 AM IST; assert the JD's Gregorian date is 2026-03-19), and `kartikShukla1Jd(2026)` lands on **2026-11-09** (Diwali/next day; assert the date, then tighten to the fixture's stated Kartik Shukla 1 once Task 0.3 has it — the `2026-11-09` fixture should show amanta Kartika and gujarati == vikram).
-- [ ] Run: `npx vitest run test/calendars-drik.test.ts` → expect pass.
-- [ ] Commit: `feat(calendars): add new-moon and sankranti helpers`.
+- [x] Test (`test/calendars-drik.test.ts`): for `2026`, assert `chaitraShukla1Jd(2026)` lands on **2026-03-19** local IST (the new moon ends ~06:52 AM IST; assert the JD's Gregorian date is 2026-03-19), and `kartikShukla1Jd(2026)` lands on **2026-11-09** (Diwali/next day; assert the date, then tighten to the fixture's stated Kartik Shukla 1 once Task 0.3 has it — the `2026-11-09` fixture should show amanta Kartika and gujarati == vikram).
+- [x] Run: `npx vitest run test/calendars-drik.test.ts` → expect pass.
+- [x] Commit: `feat(calendars): add new-moon and sankranti helpers`.
 
 ### Task 1.2: Amanta + purnimanta from the new moon
 
@@ -261,7 +261,7 @@ export function kartikShukla1Jd(year: number, ephe: EphemerisService): number {
 - Modify: `src/constants/calendars.ts`, `src/calculations/calendars.ts`
 - Test: `test/calendars-drik.test.ts`
 
-- [ ] Add to `src/constants/calendars.ts` (reuses the existing spellings, e.g. `"Ashwin"`, to avoid an API rename):
+- [x] Add to `src/constants/calendars.ts` (reuses the existing spellings, e.g. `"Ashwin"`, to avoid an API rename):
 
 ```ts
 // Ordered Chaitra..Phalguna (index 0 = Chaitra). Derived from CHANDRA_MASA_BY_SUNSIGN so
@@ -272,7 +272,7 @@ export const AMANTA_MONTHS = [
 ];
 ```
 
-- [ ] In `computeCalendars`, replace lines 111–114 with:
+- [x] In `computeCalendars`, replace lines 111–114 with:
 
 ```ts
 // Amanta lunar month = the month begun by the last new moon, named by the Sun's
@@ -286,11 +286,11 @@ const chandramasaPurnimanta =
   tithiIdx <= 15 ? chandramasaAmanta : AMANTA_MONTHS[(amantaIdx + 1) % 12];
 ```
 
-- [ ] Import `AMANTA_MONTHS`. Leave `nirayana_solar_month` (sun-sign based) unchanged.
-- [ ] Test: `2026-10-16` New Delhi → amanta `Ashwin`, purnimanta `Ashwin`; `2026-03-18` → amanta `Phalguna`, purnimanta `Chaitra`; `2026-03-19` → amanta `Chaitra`, purnimanta `Chaitra`.
-- [ ] Run: `npx vitest run test/calendars-drik.test.ts test/panchang.test.ts` → expect pass (fix any existing test that pinned the old purnimanta).
-- [ ] Flip the amanta/purnimanta `it.todo`s in `test/drik-parity.test.ts` to `it`.
-- [ ] Commit: `fix(calendars): derive amanta/purnimanta from the new moon (drik parity)`.
+- [x] Import `AMANTA_MONTHS`. Leave `nirayana_solar_month` (sun-sign based) unchanged.
+- [x] Test: `2026-10-16` New Delhi → amanta `Ashwin`, purnimanta `Ashwin`; `2026-03-18` → amanta `Phalguna`, purnimanta `Chaitra`; `2026-03-19` → amanta `Chaitra`, purnimanta `Chaitra`.
+- [x] Run: `npx vitest run test/calendars-drik.test.ts test/panchang.test.ts` → expect pass (fix any existing test that pinned the old purnimanta).
+- [x] Flip the amanta/purnimanta `it.todo`s in `test/drik-parity.test.ts` to `it`.
+- [x] Commit: `fix(calendars): derive amanta/purnimanta from the new moon (drik parity)`.
 
 ### Task 1.3: Shaka boundary, Vikram, Kali
 
@@ -298,7 +298,7 @@ const chandramasaPurnimanta =
 - Modify: `src/calculations/calendars.ts`
 - Test: `test/calendars-drik.test.ts`
 
-- [ ] Replace lines 87–94 (the `afterMeshaIngress` block and `kaliYear`) with:
+- [x] Replace lines 87–94 (the `afterMeshaIngress` block and `kaliYear`) with:
 
 ```ts
 const [gregYear] = ephe.revjul(jd);
@@ -311,11 +311,11 @@ const vikramYear = shakaYear + 135;
 const kaliYear = shakaYear + 3179;
 ```
 
-- [ ] Remove the now-dead `kaliYear = Math.floor(kaliAhargana/365.25)+1` line; keep `kaliAhargana`.
-- [ ] Test: `2026-10-16` → shaka 1948 / vikram 2083 / kali 5127; `2026-03-18` → 1947 / 2082 / 5126; `2026-03-19` → 1948 / 2083 / 5127; `2026-01-15` → 1947 / 2082 / 5126; `2027-02-01` → 1948 / 2083 / 5127. Assert `samvatsara_shaka === "Parabhava"` and `samvatsara_vikram === "Siddharthi"` for the Oct date.
-- [ ] Run: `npx vitest run test/calendars-drik.test.ts test/panchang.test.ts`.
-- [ ] Flip the Shaka/Vikram/Kali/samvatsara `it.todo`s.
-- [ ] Commit: `fix(calendars): Shaka/Vikram/Kali boundaries follow Chaitra Shukla Pratipada`.
+- [x] Remove the now-dead `kaliYear = Math.floor(kaliAhargana/365.25)+1` line; keep `kaliAhargana`.
+- [x] Test: `2026-10-16` → shaka 1948 / vikram 2083 / kali 5127; `2026-03-18` → 1947 / 2082 / 5126; `2026-03-19` → 1948 / 2083 / 5127; `2026-01-15` → 1947 / 2082 / 5126; `2027-02-01` → 1948 / 2083 / 5127. Assert `samvatsara_shaka === "Parabhava"` and `samvatsara_vikram === "Siddharthi"` for the Oct date.
+- [x] Run: `npx vitest run test/calendars-drik.test.ts test/panchang.test.ts`.
+- [x] Flip the Shaka/Vikram/Kali/samvatsara `it.todo`s.
+- [x] Commit: `fix(calendars): Shaka/Vikram/Kali boundaries follow Chaitra Shukla Pratipada`.
 
 ### Task 1.4: Gujarati boundary
 
@@ -323,7 +323,7 @@ const kaliYear = shakaYear + 3179;
 - Modify: `src/calculations/calendars.ts`
 - Test: `test/calendars-drik.test.ts`
 
-- [ ] Replace line 97 with:
+- [x] Replace line 97 with:
 
 ```ts
 // Gujarati Samvat = Vikram − 1 between Chaitra Shukla 1 and Kartik Shukla 1; else Vikram.
@@ -335,16 +335,134 @@ const lastKartik = jd >= kartikThis ? kartikThis : kartikPrev;
 const gujaratiYear = lastChaitra > lastKartik ? vikramYear - 1 : vikramYear;
 ```
 
-- [ ] Test: `2026-10-16` → 2082; `2026-03-18` and `2026-03-19` → 2082; `2026-11-09` → 2083; `2026-02-01` → 2082; `2027-01-15` → 2083.
-- [ ] Run + flip Gujarati `it.todo`. Commit: `fix(calendars): Gujarati Samvat rolls at Kartik Shukla Pratipada`.
+- [x] Test: `2026-10-16` → 2082; `2026-03-18` and `2026-03-19` → 2082; `2026-11-09` → 2083; `2026-02-01` → 2082; `2027-01-15` → 2083.
+- [x] Run + flip Gujarati `it.todo`. Commit: `fix(calendars): Gujarati Samvat rolls at Kartik Shukla Pratipada`.
 
-### Task 1.5: `national_civil_date` follows the corrected Shaka
+### Task 1.5: `national_civil_date` uses the solar national Saka year
 
 **Files:**
-- Modify: `src/calculations/calendars.ts`
+- Modify: `src/calculations/calendars.ts`, `src/api/get-panchang.ts`
+- Test: `test/calendars-drik.test.ts`
 
-- [ ] `computeNationalCivilDate` already receives `shakaYear`; because Task 1.3 fixed it, the civil date's `shaka_year` now matches drik (1948 on 2026-10-16). Assert this in `test/calendars-drik.test.ts`. Leave `national_nirayana_date` month logic unchanged (out of scope); add a code comment noting the known open delta.
-- [ ] Commit: `test(calendars): assert national civil date uses corrected Shaka year`.
+- [x] **Corrected 2026-10-17 (fixture evidence).** The original assumption — that the national
+      civil date should consume Task 1.3's *lunar* `shakaYear` — is wrong. drik's `National Civil
+      Date` is the **solar** Indian National Calendar: it rolls at Chaitra 1 (Mar 22, or Mar 21 in
+      leap years), not at the lunar Chaitra Shukla Pratipada. The fixtures prove it: 2026-03-19 →
+      `Phalguna 28, 1947 Shaka` (the lunar shaka is already 1948 that day); 2026-03-18 →
+      `Phalguna 27, 1947`. Feeding the lunar year to `computeNationalCivilDate` mislabels Mar 19–21
+      (1948 vs 1947) and returns the `Phalguna 30` fallback for Mar 22 → early Apr in late-boundary
+      years (2027's lunar boundary is 2027-04-06 23:51 UT).
+- [x] Derive the national year independently and pass it to both `computeNationalCivilDate` calls:
+      `const nationalShakaYear = gregMonth > 3 || (gregMonth === 3 && gregDay >= (isGregorianLeap(gregYear) ? 21 : 22)) ? gregYear - 78 : gregYear - 79;`
+      Return it as `nationalCivilDate.shakaYear` / `nationalNirayanaDate.shakaYear`. Keep the lunar
+      `shakaYear` for every lunar field.
+- [x] `src/api/get-panchang.ts:524–533` reports `shaka_year: calInfo.shakaYear` (lunar) for both
+      national dates; report each struct's own `shakaYear` instead.
+- [x] Leave the `national_nirayana_date` month logic unchanged (out of scope); `_nirayana` is unused,
+      so both national dates coincide today — add a comment noting that known open delta.
+- [x] Assert against the captured ground truth (`raw["National Civil Date"]`) for all six dates on
+      New Delhi, plus `2027-03-22` → Chaitra 1, 1949 and `2027-04-05` → Chaitra 15, 1949 (the
+      late-boundary year that currently hits the fallback). Also fix the stale comment in
+      `test/calendars-drik.test.ts` that calls the 2027 boundary "2027-03-19" (it is 2027-04-06).
+- [x] Commit: `fix(calendars): national civil date uses the solar Saka year`.
+
+---
+
+# Phase 1B — Limb name/value parity (found by the Phase 0 harness)
+
+*Added 2026-10-17 after a per-field inventory over all 30 fixtures (the grouped
+`it()` blocks in the parity suite mask partial progress). These mismatches are
+required by this plan's own verification criteria — criterion 2 names
+`paksha`, tithi/nakshatra/yoga/karana names and `vara`; criterion 3 names
+sunrise/sunset — but the original plan had no tasks for them. User ruling
+(2026-10-17): "Fix everything to match drik" (adopt drik's transliterations).*
+
+### Task 1.6: Fix the locale tithi tables (Krishna Chaturdashi / Amavasya)
+
+**Files:**
+- Modify: `src/locales/en.ts`, `src/locales/hi.ts`, `src/locales/ta.ts`
+- Modify: `test/calendars-drik.test.ts` (or the parity suite's limb-name test)
+
+- [x] Root cause: `get-panchang.ts` looks up `table.tithis[i]` with the **1-based**
+      tithi index (1..30), but each locale's `tithis` array has only **30** entries
+      (indices 0..29): index 0 is `""`, index 15 is "Purnima", index 29 is
+      "Amavasya". So tithi #29 is wrongly named "Amavasya" and tithi #30 falls back
+      to the literal `"Tithi 30"`. The array is **missing the Krishna-Chaturdashi
+      entry** at position 29.
+- [x] Append the missing entry so the array has **31** entries with index 30 =
+      "Amavasya": `en` "Chaturdashi", `hi` "चतुर्दशी", `ta` "சதுர்த்தசி". Do not
+      touch the `Ashwini` nakshatra or any other locale key.
+- [x] Verify against the fixtures: `panchang.tithi.name` on 2026-03-18 must be
+      "Chaturdashi" (not "Amavasya"), and on 2026-03-19 / 2026-11-09 must be
+      "Amavasya" (not "Tithi 30"). `npm test` stays green.
+- [x] Commit: `fix(locales): add the missing Krishna Chaturdashi tithi name`.
+
+### Task 1.7: Derive `paksha` from the sunrise tithi
+
+**Files:**
+- Modify: `src/api/get-panchang.ts` (~line 262)
+- Modify: `src/calculations/calendars.ts` (~line 186)
+
+- [x] `get-panchang.ts` still computes `paksha` from `tithiIndex(sunLon, moonLon)`
+      where `sunLon`/`moonLon` are evaluated at **noon** (line ~149–156). Derive it
+      from the tithi at **sunrise** instead: `tithiNow` (= `tithiSeq[0]`, the tithi
+      active at `winStart` = sunrise). Shukla for index ≤ 15, else Krishna.
+- [x] `calendars.ts` `computeCalendars` (~line 186) repeats the same bug: it uses
+      the noon `tithiIdx` for `lunar_month.paksha`, even though line ~174 already
+      computes the sunrise tithi index. Use the sunrise index for `paksha`.
+- [x] `panchang.paksha` and `lunar_month.paksha` must agree. Verify on the fixture
+      Amavasya days (2026-03-19, 2026-11-09) that both read "Krishna Paksha".
+- [x] Leave `pravishte_day` / `tithi.pravishte` on the noon index (not asserted).
+- [x] Commit: `fix(panchang): derive paksha from the sunrise tithi`.
+
+### Task 1.8: Adopt drik's spellings for vara and karana
+
+**Files:**
+- Modify: `src/locales/en.ts` (`varas`), `src/constants/panchang.ts`
+      (`karanaName`, `MOVABLE_KARANA_NAMES`, fixed-karana branches),
+      `src/constants/muhurta.ts` (`INAUSPICIOUS_KARANAS`)
+- Add/extend assertions in `test/calendars-drik.test.ts`
+
+- [ ] `vara.sanskrit`: change all seven weekday names from the `-vara` ending to
+      drik's `-wara` ending (Soma/Budha/Guru/Shukra/Mangala occur in the fixtures;
+      apply the same rule to Shani/Ravi and note it as inferred). Leave `vara.english`
+      and the `hi`/`ta` arrays alone.
+- [ ] `karana.name`: `Gara` → `Garaja`, `Naga` → `Nagava`, `Kimstughna` →
+      `Kinstughna` in `karanaName` and `MOVABLE_KARANA_NAMES`; update
+      `INAUSPICIOUS_KARANAS` in `src/constants/muhurta.ts` to `"Nagava"`.
+- [ ] Do not change the karana **index** arithmetic — only the display names.
+- [ ] Commit: `refactor(panchang): use drik spellings for vara and karana names`.
+
+### Task 1.9: Reconcile the drik Kelowna 2026-11-09 display anomaly (NO library change)
+
+**Files:**
+- Modify: `test/fixtures/drik/pages/kelowna-2026-11-09.json` and/or
+      `test/drik-helpers.ts` / `test/drik-parity.test.ts`
+- Modify: `docs/superpowers/specs/2026-10-16-drik-parity-design.md` + `README.md`
+
+- [ ] Evidence (verified 2026-10-17): drik's `kelowna-2026-11-09` page renders its
+      wall clocks in **PDT (UTC−7)** although Kelowna is **PST (UTC−8)** on that
+      date — drik's own `Madhyahna` (12:41) and `Ratimana` (14h40m) are consistent
+      only under −7. The library's absolute instants are **correct** (sunrise
+      15:01:02Z; independent authority sunrise-sunset.org gives 14:59:29Z, solar
+      noon 19:41Z vs the library's 19:41:30Z). Across all 30 fixtures this is the
+      **only** offset anomaly (suwanee-ga 11-09 correctly uses −300, london 11-09
+      correctly uses 0).
+- [ ] Therefore do **not** change `src/`. Reconcile the harness instead: let a
+      fixture declare the UTC offset drik actually used for its wall clocks, and
+      compare that page in that offset (falling back to the IANA `timezone`). Add
+      the offset to the affected fixture with a short comment, or, if a per-page
+      offset field is judged too heavy for one page, exclude that single assertion
+      with an explicit comment. Either way the parity suite must be green when
+      enabled in Phase 6.
+- [ ] Document the anomaly in the design doc and README (drik-side defect, not ours).
+- [ ] Commit: `test(drik): reconcile the Kelowna 2026-11-09 PDT display anomaly`.
+
+**Known latent limitation (record, do not fix here):** `computeSolarTimes` searches
+from `jdNoon − 0.5` = **0h UT** of the date. For locations far east of Greenwich
+(roughly UTC+12 and beyond) local sunrise can precede 0h UT, so the search would
+return the *next* local day's sunrise. No fixture exercises this; leave the
+behaviour unchanged and note it in the ledger.
 
 ---
 

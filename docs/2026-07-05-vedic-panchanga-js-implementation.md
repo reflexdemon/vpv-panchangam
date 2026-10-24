@@ -1,6 +1,6 @@
 # Vedic Panchanga JS Library — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Status (2026-10):** Initial library port and modules (Tasks 1–18, 20) are **COMPLETED** (published as `vpv-panchangam`). Runtime was subsequently migrated to `@swisseph/browser` WASM. Ongoing DrikPanchang parity fixes are tracked in [2026-10-16-drik-parity.md](file:///Users/reflex/dev/gh/vpv-panchangam/docs/superpowers/plans/2026-10-16-drik-parity.md).
 
 **Goal:** Port the Vedic Panchanga Python backend (vedicpanchanga.com) to a TypeScript npm package with full Drik Panchang + Kundali calculator.
 
