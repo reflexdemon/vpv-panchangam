@@ -524,12 +524,12 @@ export async function computeDetailedPanchang(
         national_civil_date: {
           month: calInfo.nationalCivilDate.month,
           day: calInfo.nationalCivilDate.day,
-          shaka_year: calInfo.shakaYear,
+          shaka_year: calInfo.nationalCivilDate.shakaYear,
         },
         national_nirayana_date: {
           month: calInfo.nationalNirayanaDate.month,
           day: calInfo.nationalNirayanaDate.day,
-          shaka_year: calInfo.shakaYear,
+          shaka_year: calInfo.nationalNirayanaDate.shakaYear,
         },
       },
     };

@@ -150,10 +150,10 @@ export const NATIONAL_CIVIL_MONTHS = [
   { name: "Asadha", days: 31 },
   { name: "Sravana", days: 31 },
   { name: "Bhadra", days: 31 },
-  { name: "Asvina", days: 30 },
+  { name: "Ashwina", days: 30 },
   { name: "Kartika", days: 30 },
   { name: "Agrahayana", days: 30 },
-  { name: "Pausa", days: 30 },
+  { name: "Pausha", days: 30 },
   { name: "Magha", days: 30 },
   { name: "Phalguna", days: 30 },
 ];

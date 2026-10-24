@@ -137,7 +137,7 @@ export function computeCalendars(
 
   // Shaka year increments on Chaitra Shukla Pratipada (the new moon before the
   // Mesha sankranti), not at Mesha ingress.
-  const [gregYear] = ephe.revjul(jd);
+  const [gregYear, gregMonth, gregDay] = ephe.revjul(jd);
   const chaitraThis = chaitraShukla1Jd(gregYear, ephe);
   const shakaYear = jd >= chaitraThis ? gregYear - 78 : gregYear - 79;
 
@@ -196,9 +196,21 @@ export function computeCalendars(
     : "Dakshinayana";
   const vedicAyana = drikAyana;
 
-  // National Civil Calendar (Indian Saka National Calendar)
-  const nationalCivil = computeNationalCivilDate(jd, shakaYear, false);
-  const nationalNirayana = computeNationalCivilDate(jd, shakaYear, true);
+  // National Civil Calendar (Indian Saka National Calendar) is solar: Chaitra 1
+  // is Mar 22 (Mar 21 in leap years), not the lunar Chaitra Shukla Pratipada
+  // used by the Shaka year above.
+  const nationalShakaYear =
+    gregMonth > 3 ||
+    (gregMonth === 3 && gregDay >= (isGregorianLeap(gregYear) ? 21 : 22))
+      ? gregYear - 78
+      : gregYear - 79;
+  // `_nirayana` is unused, so both national dates coincide today (known open delta).
+  const nationalCivil = computeNationalCivilDate(jd, nationalShakaYear, false);
+  const nationalNirayana = computeNationalCivilDate(
+    jd,
+    nationalShakaYear,
+    true,
+  );
 
   // Ayanamsa (Lahiri) at this JD
   const ayanamshaLahiri = ephe.getAyanamsaUt(jd);
@@ -213,8 +225,11 @@ export function computeCalendars(
     shakaYear,
     vikramYear,
     gujaratiYear,
-    nationalCivilDate: { ...nationalCivil, shakaYear },
-    nationalNirayanaDate: { ...nationalNirayana, shakaYear },
+    nationalCivilDate: { ...nationalCivil, shakaYear: nationalShakaYear },
+    nationalNirayanaDate: {
+      ...nationalNirayana,
+      shakaYear: nationalShakaYear,
+    },
     samvatsaraShaka,
     samvatsaraVikram,
     samvatsaraShakaSuffix,

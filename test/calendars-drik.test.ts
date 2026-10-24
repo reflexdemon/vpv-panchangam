@@ -66,7 +66,7 @@ describe("drik lunar-month anchors", () => {
       ["2026-04-14", 1948, 2083, 5127],
       ["2026-10-16", 1948, 2083, 5127],
       ["2026-11-09", 1948, 2083, 5127],
-      // Before that year's Chaitra Shukla 1 (2027-03-19): still the prior year.
+      // Before that year's Chaitra Shukla 1 (2027-04-06 23:51 UT): still the prior year.
       ["2027-02-01", 1948, 2083, 5127],
     ];
 
@@ -95,6 +95,116 @@ describe("drik lunar-month anchors", () => {
       );
       expect(p.lunar_month.samvatsara_shaka).toBe("Parabhava");
       expect(p.lunar_month.samvatsara_vikram).toBe("Siddharthi");
+    });
+  });
+
+  describe("national civil date uses the solar national Saka year", () => {
+    // Ground truth: drik `raw["National Civil Date"]` for New Delhi (identical
+    // for every capture location). The national calendar is solar: Chaitra 1 =
+    // Mar 22 (Mar 21 in leap years), independent of the lunar Shaka year.
+    const cases: Array<[string, string, number, number]> = [
+      ["2026-01-15", "Pausha", 25, 1947],
+      ["2026-03-18", "Phalguna", 27, 1947],
+      ["2026-03-19", "Phalguna", 28, 1947],
+      ["2026-04-14", "Chaitra", 24, 1948],
+      ["2026-10-16", "Ashwina", 24, 1948],
+      ["2026-11-09", "Kartika", 18, 1948],
+      // Derived from the national calendar (no fixture): Chaitra 1 = 2027-03-22.
+      ["2027-03-22", "Chaitra", 1, 1949],
+      ["2027-04-05", "Chaitra", 15, 1949],
+    ];
+
+    const national = async (date: string) =>
+      (
+        await computeDetailedPanchang(
+          date,
+          NEW_DELHI.lat,
+          NEW_DELHI.lon,
+          NEW_DELHI.tz,
+          "en",
+        )
+      ).calendars.national_civil_date;
+
+    for (const [date, month, day, shakaYear] of cases) {
+      it(`${date} → ${month} ${day}, ${shakaYear}`, async () => {
+        expect(await national(date)).toEqual({
+          month,
+          day,
+          shaka_year: shakaYear,
+        });
+      });
+    }
+
+    it("flips the national Saka year on Mar 22 (Mar 21 in leap years)", async () => {
+      const flips: Array<[string, number]> = [
+        ["2026-03-21", 1947],
+        ["2026-03-22", 1948],
+        ["2027-03-21", 1948],
+        ["2027-03-22", 1949],
+        ["2028-03-20", 1949],
+        ["2028-03-21", 1950],
+      ];
+      for (const [date, shakaYear] of flips) {
+        expect((await national(date)).shaka_year).toBe(shakaYear);
+      }
+    });
+
+    it("samples every month of 2026 and 2027 without a month/year glitch", async () => {
+      const months = [
+        "Pausha",
+        "Magha",
+        "Phalguna",
+        "Chaitra",
+        "Vaishakha",
+        "Jyaistha",
+        "Asadha",
+        "Sravana",
+        "Bhadra",
+        "Ashwina",
+        "Kartika",
+        "Agrahayana",
+      ];
+      for (const year of [2026, 2027]) {
+        for (let m = 1; m <= 12; m++) {
+          const date = `${year}-${String(m).padStart(2, "0")}-15`;
+          const n = await national(date);
+          const shakaYear = m <= 3 ? year - 79 : year - 78;
+          expect([date, n.month, n.shaka_year]).toEqual([
+            date,
+            months[m - 1],
+            shakaYear,
+          ]);
+          expect(n.day).toBeGreaterThanOrEqual(1);
+          expect(n.day).toBeLessThanOrEqual(31);
+        }
+      }
+    });
+
+    it("advances one national day at a time through Phalguna 30 into Chaitra", async () => {
+      // Daily sweep over the solar new year. The old lunar-year input made the
+      // month derivation run past the year end, so the `Phalguna 30` fallback
+      // repeated for every out-of-range day instead of advancing.
+      for (const year of [2026, 2027]) {
+        const expected: Array<[string, string, number, number]> = [];
+        for (let i = 0; i < 7; i++) {
+          const date = new Date(Date.UTC(year, 2, 15 + i))
+            .toISOString()
+            .slice(0, 10);
+          expected.push([date, "Phalguna", 24 + i, year - 79]);
+        }
+        for (let i = 0; i < 20; i++) {
+          const date = new Date(Date.UTC(year, 2, 22 + i))
+            .toISOString()
+            .slice(0, 10);
+          expected.push([date, "Chaitra", 1 + i, year - 78]);
+        }
+        for (const [date, month, day, shakaYear] of expected) {
+          expect([date, await national(date)]).toEqual([
+            date,
+            { month, day, shaka_year: shakaYear },
+          ]);
+        }
+      }
     });
   });
 });
