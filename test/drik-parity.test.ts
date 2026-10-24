@@ -107,7 +107,7 @@ describe("drik parity (offline replay of committed fixtures)", () => {
   for (const f of fixtures) {
     describe(`${f.slug} ${f.date}`, () => {
       let result: PanchangResponse;
-      const tz = f.timezone;
+      const tz = f.page.displayTimezone ?? f.timezone;
       const page = f.page;
 
       beforeAll(async () => {

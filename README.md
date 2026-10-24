@@ -269,7 +269,15 @@ npm test             # Run Vitest test suite
 npm run lint         # ESLint
 npm run format       # Prettier
 npm run test:watch   # Watch mode
+npm run test:drik    # Run offline Drik parity test harness
 ```
+
+### DrikPanchang Parity
+
+The panchang calculations reproduce DrikPanchang conventions as the library default, verified offline against committed reference fixtures.
+
+> **Note on Kelowna, BC (2026-11-09):** On 2026-11-09, drikpanchang.com rendered wall-clock times for Kelowna in PDT (UTC−7) even though Daylight Saving Time in British Columbia ended on 2026-11-01 (PST, UTC−8). The library's astronomical UTC instants are correct.
+
 
 ## License
 

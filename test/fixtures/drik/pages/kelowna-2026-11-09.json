@@ -2,6 +2,8 @@
   "slug": "kelowna",
   "date": "2026-11-09",
   "timezone": "America/Vancouver",
+  "displayTimezone": "Etc/GMT+7",
+  "displayTimezoneComment": "drik renders wall clocks in PDT (UTC-7) despite PST (UTC-8) on this date",
   "locationName": "Kelowna",
   "sunrise": "2026-11-09T08:01:00",
   "sunset": "2026-11-09T17:22:00",

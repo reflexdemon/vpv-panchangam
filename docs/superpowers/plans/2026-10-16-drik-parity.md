@@ -440,7 +440,7 @@ sunrise/sunset — but the original plan had no tasks for them. User ruling
       `test/drik-helpers.ts` / `test/drik-parity.test.ts`
 - Modify: `docs/superpowers/specs/2026-10-16-drik-parity-design.md` + `README.md`
 
-- [ ] Evidence (verified 2026-10-17): drik's `kelowna-2026-11-09` page renders its
+- [x] Evidence (verified 2026-10-17): drik's `kelowna-2026-11-09` page renders its
       wall clocks in **PDT (UTC−7)** although Kelowna is **PST (UTC−8)** on that
       date — drik's own `Madhyahna` (12:41) and `Ratimana` (14h40m) are consistent
       only under −7. The library's absolute instants are **correct** (sunrise
@@ -448,15 +448,15 @@ sunrise/sunset — but the original plan had no tasks for them. User ruling
       noon 19:41Z vs the library's 19:41:30Z). Across all 30 fixtures this is the
       **only** offset anomaly (suwanee-ga 11-09 correctly uses −300, london 11-09
       correctly uses 0).
-- [ ] Therefore do **not** change `src/`. Reconcile the harness instead: let a
+- [x] Therefore do **not** change `src/`. Reconcile the harness instead: let a
       fixture declare the UTC offset drik actually used for its wall clocks, and
       compare that page in that offset (falling back to the IANA `timezone`). Add
       the offset to the affected fixture with a short comment, or, if a per-page
       offset field is judged too heavy for one page, exclude that single assertion
       with an explicit comment. Either way the parity suite must be green when
       enabled in Phase 6.
-- [ ] Document the anomaly in the design doc and README (drik-side defect, not ours).
-- [ ] Commit: `test(drik): reconcile the Kelowna 2026-11-09 PDT display anomaly`.
+- [x] Document the anomaly in the design doc and README (drik-side defect, not ours).
+- [x] Commit: `test(drik): reconcile the Kelowna 2026-11-09 PDT display anomaly`.
 
 **Known latent limitation (record, do not fix here):** `computeSolarTimes` searches
 from `jdNoon − 0.5` = **0h UT** of the date. For locations far east of Greenwich

@@ -182,3 +182,7 @@ mismatches:
   window, sandhya direction, samvat formulas) to the drik conventions.
 - Timebox the topocentric moonrise/moonset tuning; record achieved residual
   drift in the repo (e.g., in the tolerance report output).
+
+## Known Site Display Anomalies
+
+- **Kelowna 2026-11-09 Daylight Saving Time shift**: drikpanchang.com rendered wall-clock times in PDT (UTC−7) instead of PST (UTC−8), despite DST having ended on 2026-11-01. The library's astronomical UTC instants (e.g., sunrise 15:01:02Z) are verified correct against independent ephemerides. The parity test harness reconciles this via `displayTimezone: "Etc/GMT+7"` on that fixture.
