@@ -185,7 +185,11 @@ export const VARA_TYAJYAM_NAZHIGAI: Record<number, number> = {
 export const VARA_TYAJYAM_DURATION_MIN = 90;
 
 // Inauspicious karanas — their full span is treated as Karana Tyajyam
-export const INAUSPICIOUS_KARANAS = new Set(["Vishti", "Chatushpada", "Naga"]);
+export const INAUSPICIOUS_KARANAS = new Set([
+  "Vishti",
+  "Chatushpada",
+  "Nagava",
+]);
 
 // Lagna defect position per sign name (for Lagna Tyajyam)
 export const LAGNA_DEFECT_POSITION: Record<string, string> = {

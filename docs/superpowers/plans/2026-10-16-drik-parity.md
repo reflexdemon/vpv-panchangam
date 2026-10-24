@@ -423,15 +423,15 @@ sunrise/sunset — but the original plan had no tasks for them. User ruling
       `src/constants/muhurta.ts` (`INAUSPICIOUS_KARANAS`)
 - Add/extend assertions in `test/calendars-drik.test.ts`
 
-- [ ] `vara.sanskrit`: change all seven weekday names from the `-vara` ending to
+- [x] `vara.sanskrit`: change all seven weekday names from the `-vara` ending to
       drik's `-wara` ending (Soma/Budha/Guru/Shukra/Mangala occur in the fixtures;
       apply the same rule to Shani/Ravi and note it as inferred). Leave `vara.english`
       and the `hi`/`ta` arrays alone.
-- [ ] `karana.name`: `Gara` → `Garaja`, `Naga` → `Nagava`, `Kimstughna` →
+- [x] `karana.name`: `Gara` → `Garaja`, `Naga` → `Nagava`, `Kimstughna` →
       `Kinstughna` in `karanaName` and `MOVABLE_KARANA_NAMES`; update
       `INAUSPICIOUS_KARANAS` in `src/constants/muhurta.ts` to `"Nagava"`.
-- [ ] Do not change the karana **index** arithmetic — only the display names.
-- [ ] Commit: `refactor(panchang): use drik spellings for vara and karana names`.
+- [x] Do not change the karana **index** arithmetic — only the display names.
+- [x] Commit: `refactor(panchang): use drik spellings for vara and karana names`.
 
 ### Task 1.9: Reconcile the drik Kelowna 2026-11-09 display anomaly (NO library change)
 

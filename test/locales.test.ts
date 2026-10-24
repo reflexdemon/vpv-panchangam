@@ -58,8 +58,8 @@ describe('Locale tables — en', () => {
 
   it('has 8 vara entries (1-indexed, index 0 empty)', () => {
     expect(table.varas[0]).toBe('');
-    expect(table.varas[1]).toBe('Somavara');
-    expect(table.varas[7]).toBe('Ravivara');
+    expect(table.varas[1]).toBe('Somawara');
+    expect(table.varas[7]).toBe('Raviwara');
     expect(table.varaEnglish[7]).toBe('Sunday');
   });
 

@@ -80,11 +80,11 @@ describe('Rahu Kalam / Yamaganda / Gulika segments', () => {
 });
 
 describe('karanaName()', () => {
-  it('index 0 = Kimstughna (fixed)', () => {
-    expect(karanaName(0)).toBe('Kimstughna');
+  it('index 0 = Kinstughna (fixed)', () => {
+    expect(karanaName(0)).toBe('Kinstughna');
   });
   it('indices 1-7 cycle through 7 movable karanas', () => {
-    const expected = ['Bava', 'Balava', 'Kaulava', 'Taitila', 'Gara', 'Vanija', 'Vishti'];
+    const expected = ['Bava', 'Balava', 'Kaulava', 'Taitila', 'Garaja', 'Vanija', 'Vishti'];
     for (let i = 0; i < 7; i++) {
       expect(karanaName(i + 1)).toBe(expected[i]);
     }
@@ -95,7 +95,7 @@ describe('karanaName()', () => {
   it('fixed karanas 57-59', () => {
     expect(karanaName(57)).toBe('Shakuni');
     expect(karanaName(58)).toBe('Chatushpada');
-    expect(karanaName(59)).toBe('Naga');
+    expect(karanaName(59)).toBe('Nagava');
   });
   it('last movable index (56) = Vishti', () => {
     expect(karanaName(56)).toBe('Vishti');
@@ -440,10 +440,10 @@ describe('Tyajyam ratio tables', () => {
   it('Monday VARA_TYAJYAM offset = 42 nazhigai', () => {
     expect(VARA_TYAJYAM_NAZHIGAI[1]).toBe(42);
   });
-  it('INAUSPICIOUS_KARANAS includes Vishti, Chatushpada, Naga', () => {
+  it('INAUSPICIOUS_KARANAS includes Vishti, Chatushpada, Nagava', () => {
     expect(INAUSPICIOUS_KARANAS.has('Vishti')).toBe(true);
     expect(INAUSPICIOUS_KARANAS.has('Chatushpada')).toBe(true);
-    expect(INAUSPICIOUS_KARANAS.has('Naga')).toBe(true);
+    expect(INAUSPICIOUS_KARANAS.has('Nagava')).toBe(true);
     expect(INAUSPICIOUS_KARANAS.size).toBe(3);
   });
 });
