@@ -31,6 +31,7 @@ let ephe: EphemerisService;
 let sunriseJd: number;
 let sunsetJd: number;
 let nextSunriseJd: number;
+let prevSunsetJd: number;
 // Kelowna 2018-06-01 is a Friday (weekday 5)
 const WEEKDAY_FRIDAY = 5;
 
@@ -48,6 +49,13 @@ beforeAll(async () => {
   sunriseJd = times.sunrise ?? jdNoon - 0.25;
   sunsetJd = times.sunset ?? jdNoon + 0.25;
   nextSunriseJd = times.nextSunrise ?? sunriseJd + 1;
+  const prevTimes = computeSolarTimes(
+    jdNoon - 1,
+    KELOWNA.latitude,
+    KELOWNA.longitude,
+    ephe,
+  );
+  prevSunsetJd = prevTimes.sunset ?? sunsetJd - 1;
 });
 
 function isValidIso(s: string): boolean {
@@ -90,25 +98,21 @@ describe("muhurtaWindows", () => {
 
 describe("brahmaMuhurta", () => {
   it("returns a TimeWindow", () => {
-    const w = brahmaMuhurta(sunriseJd, nextSunriseJd, ephe);
+    const w = brahmaMuhurta(prevSunsetJd, sunriseJd, ephe);
     expect(w).not.toBeNull();
     expect(isValidIso(w!.start)).toBe(true);
     expect(isValidIso(w!.end)).toBe(true);
   });
 
-  it("ends at sunrise minus 96 minutes", () => {
-    const w = brahmaMuhurta(sunriseJd, nextSunriseJd, ephe);
-    const endMs = new Date(w!.end).getTime();
+  it("ends at sunrise minus 1 night-muhurta and lasts 1 night-muhurta", () => {
+    const w = brahmaMuhurta(prevSunsetJd, sunriseJd, ephe);
+    const nightDurMs = (sunriseJd - prevSunsetJd) * 86400000;
+    const nightMuhMs = nightDurMs / 15;
     const sunriseMs = sunriseJd * 86400000 - 2440587.5 * 86400000;
-    // Brahma Muhurta ends ~96min before sunrise
-    const diffMs = sunriseMs - endMs;
-    expect(diffMs / 60000).toBeCloseTo(96, 0);
-  });
-
-  it("duration is 96 minutes", () => {
-    const w = brahmaMuhurta(sunriseJd, nextSunriseJd, ephe);
+    const endMs = new Date(w!.end).getTime();
     const durMs = new Date(w!.end).getTime() - new Date(w!.start).getTime();
-    expect(durMs / 60000).toBeCloseTo(96, 0);
+    expect(sunriseMs - endMs).toBeCloseTo(nightMuhMs, -3);
+    expect(durMs).toBeCloseTo(nightMuhMs, -3);
   });
 });
 

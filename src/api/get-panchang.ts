@@ -161,6 +161,11 @@ export async function computeDetailedPanchang(
     const sunsetJd = solarTimes.sunset ?? jdNoon + 0.25;
     const nextSunriseJd = solarTimes.nextSunrise ?? sunriseJd + 1;
 
+    // Previous day's sunset — needed for brahma muhurta and godhuli muhurta
+    // (both are anchored to the night that ends at today's sunrise).
+    const prevSolarTimes = computeSolarTimes(jdNoon - 1, lat, lon, ephe);
+    const prevSunsetJd = prevSolarTimes.sunset ?? sunsetJd - 1;
+
     const sunriseIso =
       solarTimes.sunrise != null ? jdToIso(sunriseJd, ephe) : null;
     const sunsetIso =
@@ -263,7 +268,7 @@ export async function computeDetailedPanchang(
     const paksha = tIdx <= 15 ? "Shukla Paksha" : "Krishna Paksha";
 
     // ── Muhurta windows ───────────────────────────────────────────────────────
-    const brahma = brahmaMuhurta(sunriseJd, nextSunriseJd, ephe);
+    const brahma = brahmaMuhurta(prevSunsetJd, sunriseJd, ephe);
     const pratah = pratahSandhya(sunriseJd, sunsetJd, nextSunriseJd, ephe);
     const abhijit = abhijitMuhurta(
       sunriseJd,
@@ -273,7 +278,7 @@ export async function computeDetailedPanchang(
       ephe,
     );
     const vijay = vijayMuhurta(sunriseJd, sunsetJd, nextSunriseJd, ephe);
-    const godhuli = godhuliMuhurta(sunsetJd, ephe);
+    const godhuli = godhuliMuhurta(sunsetJd, prevSunsetJd, sunriseJd, ephe);
     const sayahna = sayahnaSandhya(sunriseJd, sunsetJd, nextSunriseJd, ephe);
     const nishita = nishitaMuhurta(sunriseJd, sunsetJd, nextSunriseJd, ephe);
 

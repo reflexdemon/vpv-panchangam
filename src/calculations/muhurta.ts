@@ -56,35 +56,29 @@ export function muhurtaWindows(
   return wins;
 }
 
-/** Brahma Muhurta: 2nd muhurta before sunrise = muhurta index 29 (0-indexed from midnight) */
+/**
+ * Brahma Muhurta: the 14th night muhurta (2nd muhurta before sunrise),
+ * computed against the night that *ends* at today's sunrise
+ * (i.e. prevSunsetJd → sunriseJd).
+ */
 export function brahmaMuhurta(
+  prevSunsetJd: number,
   sunriseJd: number,
-  nextSunriseJd: number,
   ephe: EphemerisService,
-): TimeWindow | null {
-  const prevSunriseJd = sunriseJd - (nextSunriseJd - sunriseJd);
-  const wins = muhurtaWindows(
-    prevSunriseJd,
-    sunriseJd - (sunriseJd - prevSunriseJd) * (15 / 30),
-    nextSunriseJd,
-  );
-  // Brahma Muhurta = 2 muhurtas before sunrise = the 29th muhurta
-  // Actually it is 96 minutes before sunrise
-  const duration = 96 / (24 * 60); // 96 minutes in days
-  const start = sunriseJd - 2 * duration;
-  const end = sunriseJd - duration;
-  return jdToWin(start, end, ephe);
+): TimeWindow {
+  const nightMuh = (sunriseJd - prevSunsetJd) / 15;
+  return jdToWin(sunriseJd - 2 * nightMuh, sunriseJd - nightMuh, ephe);
 }
 
-/** Pratah Sandhya: first muhurta of the day */
+/** Pratah Sandhya: the 1.5 night-muhurtas immediately before sunrise. */
 export function pratahSandhya(
   sunriseJd: number,
   sunsetJd: number,
   nextSunriseJd: number,
   ephe: EphemerisService,
 ): TimeWindow {
-  const wins = muhurtaWindows(sunriseJd, sunsetJd, nextSunriseJd);
-  return jdToWin(wins[1][0], wins[1][1], ephe);
+  const nightMuh = (nextSunriseJd - sunsetJd) / 15;
+  return jdToWin(sunriseJd - 1.5 * nightMuh, sunriseJd, ephe);
 }
 
 /** Abhijit Muhurta: 8th muhurta (middle of the day) */
@@ -105,7 +99,7 @@ export function abhijitMuhurta(
   );
 }
 
-/** Vijay Muhurta: 14th muhurta of the day */
+/** Vijay Muhurta: 11th muhurta of the day (day muhurta #11) */
 export function vijayMuhurta(
   sunriseJd: number,
   sunsetJd: number,
@@ -113,27 +107,33 @@ export function vijayMuhurta(
   ephe: EphemerisService,
 ): TimeWindow {
   const wins = muhurtaWindows(sunriseJd, sunsetJd, nextSunriseJd);
-  return jdToWin(wins[14][0], wins[14][1], ephe);
+  return jdToWin(wins[11][0], wins[11][1], ephe);
 }
 
-/** Godhuli Muhurta: ~48 min around sunset */
+/**
+ * Godhuli Muhurta: half a night-muhurta starting at sunset.
+ * The muhurta length is derived from the *previous* night
+ * (prevSunsetJd → sunriseJd) so that it matches Drik's formula.
+ */
 export function godhuliMuhurta(
   sunsetJd: number,
+  prevSunsetJd: number,
+  sunriseJd: number,
   ephe: EphemerisService,
 ): TimeWindow {
-  const half = 24 / (24 * 60); // 24 minutes
-  return jdToWin(sunsetJd - half, sunsetJd + half, ephe);
+  const prevNightMuh = (sunriseJd - prevSunsetJd) / 15;
+  return jdToWin(sunsetJd, sunsetJd + prevNightMuh / 2, ephe);
 }
 
-/** Sayahna Sandhya: last muhurta of the day (15th) */
+/** Sayahna Sandhya: the 1.5 night-muhurtas immediately after sunset. */
 export function sayahnaSandhya(
   sunriseJd: number,
   sunsetJd: number,
   nextSunriseJd: number,
   ephe: EphemerisService,
 ): TimeWindow {
-  const wins = muhurtaWindows(sunriseJd, sunsetJd, nextSunriseJd);
-  return jdToWin(wins[15][0], wins[15][1], ephe);
+  const nightMuh = (nextSunriseJd - sunsetJd) / 15;
+  return jdToWin(sunsetJd, sunsetJd + 1.5 * nightMuh, ephe);
 }
 
 /** Nishita Muhurta: midnight muhurta (22nd-23rd, i.e. 8th night muhurta) */
