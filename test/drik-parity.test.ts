@@ -48,12 +48,20 @@ function expectHm(
   actualIso: string | null,
   expectedRaw: string,
   tz: string,
+  displayOffsetMin?: number | null,
 ): void {
   expect(actualIso).not.toBeNull();
-  const delta = minuteDelta(
-    localHm(actualIso as string, tz),
-    expectedHm(expectedRaw),
-  );
+  let actualHmStr: string;
+  if (displayOffsetMin != null) {
+    const d = new Date(actualIso as string);
+    const shifted = new Date(d.getTime() + displayOffsetMin * 60000);
+    const hh = String(shifted.getUTCHours()).padStart(2, "0");
+    const mm = String(shifted.getUTCMinutes()).padStart(2, "0");
+    actualHmStr = `${hh}:${mm}`;
+  } else {
+    actualHmStr = localHm(actualIso as string, tz);
+  }
+  const delta = minuteDelta(actualHmStr, expectedHm(expectedRaw));
   expect(delta).toBeLessThanOrEqual(TOL_MIN);
 }
 
@@ -107,7 +115,8 @@ describe("drik parity (offline replay of committed fixtures)", () => {
   for (const f of fixtures) {
     describe(`${f.slug} ${f.date}`, () => {
       let result: PanchangResponse;
-      const tz = f.page.displayTimezone ?? f.timezone;
+      const tz = (f.page as any).displayTimezone ?? f.timezone;
+      const displayOffsetMin: number | null = (f.page as any).drikUtcOffsetMinutes ?? null;
       const page = f.page;
 
       beforeAll(async () => {
@@ -148,8 +157,8 @@ describe("drik parity (offline replay of committed fixtures)", () => {
       });
 
       it("tolerant: sunrise/sunset", () => {
-        expectHm(result.sun_moon.sunrise, page.sunrise as string, tz);
-        expectHm(result.sun_moon.sunset, page.sunset as string, tz);
+        expectHm(result.sun_moon.sunrise, page.sunrise as string, tz, displayOffsetMin);
+        expectHm(result.sun_moon.sunset, page.sunset as string, tz, displayOffsetMin);
       });
 
       // moonrise/moonset is a known-drift best-effort area (lunar visibility
@@ -160,12 +169,12 @@ describe("drik parity (offline replay of committed fixtures)", () => {
           if (page.moonrise == null) {
             expect(result.sun_moon.moonrise).toBeNull();
           } else {
-            expectHm(result.sun_moon.moonrise, page.moonrise, tz);
+            expectHm(result.sun_moon.moonrise, page.moonrise, tz, displayOffsetMin);
           }
           if (page.moonset == null) {
             expect(result.sun_moon.moonset).toBeNull();
           } else {
-            expectHm(result.sun_moon.moonset, page.moonset, tz);
+            expectHm(result.sun_moon.moonset, page.moonset, tz, displayOffsetMin);
           }
         });
       });

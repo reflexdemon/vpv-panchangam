@@ -22,7 +22,8 @@ export interface DrikPage {
   slug: string;
   date: string; // YYYY-MM-DD
   timezone: string;
-  displayTimezone?: string;
+  displayTimezone?: string | null;
+  drikUtcOffsetMinutes?: number | null;
   locationName: string;
   sunrise: string | null; // localISO "YYYY-MM-DDTHH:MM" or null
   sunset: string | null;
