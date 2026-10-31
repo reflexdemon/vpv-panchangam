@@ -17,7 +17,7 @@ import {
   AMRITA_SIDDHI,
   VARJYAM_GHATIKAS,
   VARJYAM_DURATION_GHATIKAS,
-  AMRIT_OFFSET_GHATIKAS,
+  AMRIT_GHATIKAS,
   AMRIT_KALAM_DURATION_GHATIKAS,
 } from "../constants/muhurta";
 
@@ -232,7 +232,24 @@ export function varjyamWindow(
 }
 
 /**
- * Amrit Kalam = Varjyam + 26.67 ghatikas offset.
+ * Varjyam window using a custom ghatika offset (for nakshatras with a secondary window).
+ */
+export function varjyamWindow2(
+  customGhOffset: number,
+  nakIdx: number,
+  nakStartJd: number,
+  nakEndJd: number,
+  ephe: EphemerisService,
+): TimeWindow | null {
+  const nakDur = nakEndJd - nakStartJd;
+  const ghatikaFrac = customGhOffset / GHATIKAS_PER_DAY;
+  const durationFrac = VARJYAM_DURATION_GHATIKAS / GHATIKAS_PER_DAY;
+  const start = nakStartJd + ghatikaFrac * nakDur;
+  return jdToWin(start, start + durationFrac * nakDur, ephe);
+}
+
+/**
+ * Amrit Kalam = nakshatra-anchored window per AMRIT_GHATIKAS table.
  */
 export function amritKalamWindow(
   nakIdx: number,
@@ -240,8 +257,8 @@ export function amritKalamWindow(
   nakEndJd: number,
   ephe: EphemerisService,
 ): TimeWindow | null {
-  const ghatikaOffset =
-    (VARJYAM_GHATIKAS[nakIdx] + AMRIT_OFFSET_GHATIKAS) % GHATIKAS_PER_DAY;
+  const ghatikaOffset = AMRIT_GHATIKAS[nakIdx];
+  if (ghatikaOffset == null) return null;
   const nakDur = nakEndJd - nakStartJd;
   const ghatikaFrac = ghatikaOffset / GHATIKAS_PER_DAY;
   const durationFrac = AMRIT_KALAM_DURATION_GHATIKAS / GHATIKAS_PER_DAY;

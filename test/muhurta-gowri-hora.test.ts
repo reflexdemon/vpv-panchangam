@@ -254,19 +254,15 @@ describe("varjyamWindow / amritKalamWindow", () => {
     );
   });
 
-  it("amrit window starts ~26.67 ghatikas after varjyam window", () => {
-    // offset difference in fraction of nakshatra: 26.67/60
-    const v = varjyamWindow(0, nakStartJd, nakEndJd, ephe)!;
+  it("amrit window for Ashwini (idx=0) starts at AMRIT_GHATIKAS[0]=14 ghatikas from nak start", () => {
+    // AMRIT_GHATIKAS[0] = 14, VARJYAM_GHATIKAS[0] = 50 → diff = (14-50+60)%60 = 24 gh
     const a = amritKalamWindow(0, nakStartJd, nakEndJd, ephe)!;
-    const vStartMs = new Date(v.start).getTime();
-    const aStartMs = new Date(a.start).getTime();
     const nakDurMs = (nakEndJd - nakStartJd) * 86400000;
-    // Expected diff: 26.67/60 of nakshatra duration (mod wrap)
-    const expectedDiffMs = (26.67 / 60) * nakDurMs;
-    // Allow for modular wrap
-    const actualDiff =
-      (((aStartMs - vStartMs) % nakDurMs) + nakDurMs) % nakDurMs;
-    expect(actualDiff).toBeCloseTo(expectedDiffMs, -4); // within ~1min
+    const aStartMs = new Date(a.start).getTime();
+    const nakStartMs = (nakStartJd - 2440587.5) * 86400000;
+    const aOffsetMs = ((aStartMs - nakStartMs) % nakDurMs + nakDurMs) % nakDurMs;
+    const aOffsetGh = (aOffsetMs / nakDurMs) * 60;
+    expect(aOffsetGh).toBeCloseTo(14, 0); // AMRIT_GHATIKAS[0] = 14
   });
 });
 

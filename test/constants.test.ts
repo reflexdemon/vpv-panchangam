@@ -14,7 +14,7 @@ import {
   EXALTATION, DEBILITATION, OWN_SIGNS, MOOLATRIKONA,
 } from '../src/constants/planets';
 import {
-  VARJYAM_GHATIKAS, VARJYAM_DURATION_GHATIKAS, AMRIT_OFFSET_GHATIKAS,
+  VARJYAM_GHATIKAS, VARJYAM_DURATION_GHATIKAS, AMRIT_GHATIKAS,
   SARVARTHA_SIDDHI, AMRITA_SIDDHI, DUR_MUHURTA, ABHIJIT_MUHURTA_INDEX,
   GOWRI_DAY_START, HORA_DAY_START, HORA_CYCLE, AUSPICIOUS_HORAS,
   AMRITADI_TABLE, NAKSHATRA_TYAJYAM_RATIO, TITHI_TYAJYAM_BASE,
@@ -333,11 +333,11 @@ describe('Varjyam constants', () => {
       expect(v).toBeLessThanOrEqual(60);
     }
   });
-  it('VARJYAM_DURATION_GHATIKAS = 1.6', () => {
-    expect(VARJYAM_DURATION_GHATIKAS).toBe(1.6);
+  it('VARJYAM_DURATION_GHATIKAS = 4 (nakshatra-span/15)', () => {
+    expect(VARJYAM_DURATION_GHATIKAS).toBe(4);
   });
-  it('AMRIT_OFFSET_GHATIKAS = 26.67', () => {
-    expect(AMRIT_OFFSET_GHATIKAS).toBeCloseTo(26.67, 2);
+  it('AMRIT_GHATIKAS has 27 entries (one per nakshatra)', () => {
+    expect(AMRIT_GHATIKAS).toHaveLength(27);
   });
 });
 
