@@ -386,6 +386,7 @@ export function computeTamilCalendar(
   tamilMonths: Record<number, { en: string; ta: string }>,
   samvatsaraNames: string[],
   samvatsaraTaNames: string[],
+  shakaYearOverride?: number,
 ): import("../types").TamilCalendar {
   const [gregYear] = ephe.revjul(jd);
   const tamilMonth = tamilMonths[sunSignId];
@@ -393,8 +394,9 @@ export function computeTamilCalendar(
 
   // Tamil year = (greg_year - 57) → Thiruvalluvar era (rough approximation)
   // Actually: Tamil year index is Shaka + (samvatsara offset)
-  // We use Shaka-based samvatsara for Tamil as well
-  const shakaYear = gregYear - 78;
+  // We use the corrected lunar Shaka year (passed from computeCalendars) when available,
+  // falling back to the solar approximation for standalone calls.
+  const shakaYear = shakaYearOverride ?? gregYear - 78;
   const samvIdx = (shakaYear + 11) % 60;
 
   const EN_DAYS = [

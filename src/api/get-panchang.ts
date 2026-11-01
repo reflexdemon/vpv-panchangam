@@ -455,6 +455,7 @@ export async function computeDetailedPanchang(
         TAMIL_MONTHS_BY_SIGN,
         table.samvatsaras,
         table.samvatsaras,
+        calInfo.shakaYear,
       );
     } catch {
       /* non-critical */
