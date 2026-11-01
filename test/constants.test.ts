@@ -367,6 +367,15 @@ describe('DUR_MUHURTA', () => {
   it('Saturday has 2 bad muhurtas', () => {
     expect(DUR_MUHURTA[6].length).toBe(2);
   });
+  it('Tuesday has 2 bad muhurtas (day 4, night 22)', () => {
+    expect(DUR_MUHURTA[2]).toEqual([4, 22]);
+  });
+  it('Thursday has 2 bad muhurtas (6 and 12)', () => {
+    expect(DUR_MUHURTA[4]).toEqual([6, 12]);
+  });
+  it('Friday has 2 bad muhurtas (4 and 9)', () => {
+    expect(DUR_MUHURTA[5]).toEqual([4, 9]);
+  });
   it('ABHIJIT_MUHURTA_INDEX = 8', () => {
     expect(ABHIJIT_MUHURTA_INDEX).toBe(8);
   });

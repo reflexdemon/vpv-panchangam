@@ -156,9 +156,9 @@ describe("durMuhurtam", () => {
     expect(wins.length).toBe(2);
   });
 
-  it("returns 1 window on Friday (weekday 5)", () => {
+  it("returns 2 windows on Friday (weekday 5)", () => {
     const wins = durMuhurtam(sunriseJd, sunsetJd, nextSunriseJd, 5, ephe);
-    expect(wins.length).toBe(1);
+    expect(wins.length).toBe(2);
   });
 
   it("returns 2 windows on Saturday (weekday 6)", () => {

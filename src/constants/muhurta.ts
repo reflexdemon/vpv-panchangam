@@ -51,10 +51,10 @@ export const AMRITA_SIDDHI: Record<number, Set<number>> = {
 // Source: backend/panchang_constants.py DUR_MUHURTA
 export const DUR_MUHURTA: Record<number, number[]> = {
   1: [9, 12], // Mon
-  2: [4], // Tue
+  2: [4, 22], // Tue (22 = night muhurta 7; fitted from drik fixtures)
   3: [8], // Wed (coincides with Abhijit — suppressed that day)
-  4: [6], // Thu
-  5: [4], // Fri
+  4: [6, 12], // Thu (fitted from drik fixtures)
+  5: [4, 9], // Fri (fitted from drik fixtures)
   6: [1, 2], // Sat
   7: [14], // Sun
 };
