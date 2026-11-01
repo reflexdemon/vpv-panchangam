@@ -276,6 +276,8 @@ npm run test:drik    # Run offline Drik parity test harness
 
 The panchang calculations reproduce DrikPanchang conventions as the library default, verified offline against committed reference fixtures.
 
+**Moonrise/moonset:** The library uses Swiss Ephemeris with a lunar parallax and atmospheric refraction correction (`ALT0_MOON = −0.825°`). Residual drift vs drik's displayed moonrise/moonset is typically 4–10 minutes for most fixtures but can reach ~60 minutes at high latitudes or near new moon. This is a known convention difference and is **not release-gated**.
+
 > **Note on Kelowna, BC (2026-11-09):** On 2026-11-09, drikpanchang.com rendered wall-clock times for Kelowna in PDT (UTC−7) even though Daylight Saving Time in British Columbia ended on 2026-11-01 (PST, UTC−8). The library's astronomical UTC instants are correct.
 
 

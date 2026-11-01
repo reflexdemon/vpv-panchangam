@@ -33,6 +33,11 @@ export interface DaySegments {
 /**
  * Compute sunrise/sunset/moonrise/moonset for a given date and location.
  *
+ * Moonrise/moonset convention: ALT0_MOON = −0.825° (lunar parallax + refraction).
+ * Residual drift vs DrikPanchang is 4–10 min for most dates, up to ~60 min at
+ * high latitudes or near new moon. This is a known convention difference and is
+ * not release-gated. See README for details.
+ *
  * @param jdNoon  Julian Day at noon UT of the target date
  * @param lat     Latitude
  * @param lon     Geographic longitude (west is negative)
