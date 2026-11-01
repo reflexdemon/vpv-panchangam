@@ -474,7 +474,7 @@ behaviour unchanged and note it in the ledger.
 - Modify: `src/calculations/muhurta.ts` (lines 60–77), `src/api/get-panchang.ts` (line 266)
 - Test: `test/muhurta-gowri-hora.test.ts`
 
-- [ ] Change the signature and body:
+- [x] Change the signature and body:
 
 ```ts
 /** Brahma Muhurta: the 14th and 15th (last two) night muhurtas before sunrise. */
@@ -488,17 +488,17 @@ export function brahmaMuhurta(
 }
 ```
 
-- [ ] Update the caller: `const brahma = brahmaMuhurta(sunsetJd, nextSunriseJd, ephe);`
-- [ ] Rewrite the `describe("brahmaMuhurta")` tests (current lines 91–113 assume a fixed 96 min): assert `end ≈ nextSunrise − nightMuh`, `start ≈ nextSunrise − 2·nightMuh`, and `start/end` each within 1 min of drik's `04:42–05:32 AM` IST for New Delhi 2026-10-16.
-- [ ] Run: `npx vitest run test/muhurta-gowri-hora.test.ts` → pass.
-- [ ] Commit: `fix(muhurta): brahma muhurta = last two night muhurtas (drik parity)`.
+- [x] Update the caller: `const brahma = brahmaMuhurta(sunsetJd, nextSunriseJd, ephe);`
+- [x] Rewrite the `describe("brahmaMuhurta")` tests (current lines 91–113 assume a fixed 96 min): assert `end ≈ nextSunrise − nightMuh`, `start ≈ nextSunrise − 2·nightMuh`, and `start/end` each within 1 min of drik's `04:42–05:32 AM` IST for New Delhi 2026-10-16.
+- [x] Run: `npx vitest run test/muhurta-gowri-hora.test.ts` → pass.
+- [x] Commit: `fix(muhurta): brahma muhurta = last two night muhurtas (drik parity)`.
 
 ### Task 2.2: Pratah + Sayahna Sandhya
 
 **Files:**
 - Modify: `src/calculations/muhurta.ts` (`pratahSandhya`, `sayahnaSandhya`)
 
-- [ ] Replace `pratahSandhya` body (it currently returns `wins[1]`, the first day muhurta):
+- [x] Replace `pratahSandhya` body (it currently returns `wins[1]`, the first day muhurta):
 
 ```ts
 /** Pratah Sandhya: the 1.5 night-muhurtas immediately before sunrise. */
@@ -510,7 +510,7 @@ export function pratahSandhya(
 }
 ```
 
-- [ ] Replace `sayahnaSandhya` body (line 128–137: currently returns `wins[15]`, the last day muhurta, ~18:15–19:00):
+- [x] Replace `sayahnaSandhya` body (line 128–137: currently returns `wins[15]`, the last day muhurta, ~18:15–19:00):
 
 ```ts
 /** Sayahna Sandhya: the 1.5 night-muhurtas immediately after sunset. */
@@ -522,16 +522,16 @@ export function sayahnaSandhya(
 }
 ```
 
-- [ ] Test on the Kelowna 2018-06-01 fixture (existing `beforeAll`) that both windows have the expected length (`1.5 × night/15`) and sit adjacent to sunrise/sunset; add drik reference assertions for New Delhi 2026-10-16 (`05:07–06:22 AM`, `17:51–19:06`).
-- [ ] Run + Commit: `fix(muhurta): pratah/sayahna sandhya use night-muhurta spans`.
+- [x] Test on the Kelowna 2018-06-01 fixture (existing `beforeAll`) that both windows have the expected length (`1.5 × night/15`) and sit adjacent to sunrise/sunset; add drik reference assertions for New Delhi 2026-10-16 (`05:07–06:22 AM`, `17:51–19:06`).
+- [x] Run + Commit: `fix(muhurta): pratah/sayahna sandhya use night-muhurta spans`.
 
 ### Task 2.3: Vijaya Muhurta and Godhuli
 
 **Files:**
 - Modify: `src/calculations/muhurta.ts` (`vijayMuhurta`, `godhuliMuhurta`), `src/api/get-panchang.ts` (line 276)
 
-- [ ] `vijayMuhurta` (line 108–117): change `wins[14]` → `wins[11]` (day muhurta #11) and update its comment. Target: `14:01–14:47 PM` IST New Delhi and `15:15–16:00 PM` Suwanee on 2026-10-16.
-- [ ] `godhuliMuhurta` (line 119–126): it currently returns `[sunset − 24 min, sunset + 24 min]`. Change the signature to `(sunsetJd, nextSunriseJd, ephe)` and the body to:
+- [x] `vijayMuhurta` (line 108–117): change `wins[14]` → `wins[11]` (day muhurta #11) and update its comment. Target: `14:01–14:47 PM` IST New Delhi and `15:15–16:00 PM` Suwanee on 2026-10-16.
+- [x] `godhuliMuhurta` (line 119–126): it currently returns `[sunset − 24 min, sunset + 24 min]`. Change the signature to `(sunsetJd, nextSunriseJd, ephe)` and the body to:
 
 ```ts
 /** Godhuli: the half night-muhurta after sunset. */
@@ -543,17 +543,17 @@ export function godhuliMuhurta(
 }
 ```
 
-- [ ] Update caller: `const godhuli = godhuliMuhurta(sunsetJd, nextSunriseJd, ephe);`
-- [ ] Fix any test in `test/muhurta-gowri-hora.test.ts` that calls `godhuliMuhurta(sunsetJd, ephe)`.
-- [ ] Run + Commit: `fix(muhurta): vijaya = day muhurta 11, godhuli = half night-muhurta`.
+- [x] Update caller: `const godhuli = godhuliMuhurta(sunsetJd, nextSunriseJd, ephe);`
+- [x] Fix any test in `test/muhurta-gowri-hora.test.ts` that calls `godhuliMuhurta(sunsetJd, ephe)`.
+- [x] Run + Commit: `fix(muhurta): vijaya = day muhurta 11, godhuli = half night-muhurta`.
 
 ### Task 2.4: Confirm the untouched tables
 
 **Files:**
 - Test: `test/drik-parity.test.ts`
 
-- [ ] Flip `abhijit`, `nishita`, `rahu_kalam`, `yamaganda`, `gulika`, `dur_muhurtam` assertions from `it.todo` to `it` (they already pass within 1 min).
-- [ ] Commit: `test(drik): lock abhijit/nishita/rahu/yamaganda/gulika/dur muhurtam parity`.
+- [x] Flip `abhijit`, `nishita`, `rahu_kalam`, `yamaganda`, `gulika`, `dur_muhurtam` assertions from `it.todo` to `it` (they already pass within 1 min).
+- [x] Commit: `test(drik): lock abhijit/nishita/rahu/yamaganda/gulika/dur muhurtam parity`.
 
 ---
 
@@ -566,21 +566,21 @@ export function godhuliMuhurta(
 **Files:**
 - Modify: `src/constants/muhurta.ts`
 
-- [ ] Set both durations to 4 ghatikas (= `span/15`, since the code treats the nakshatra span as 60 ghatikas):
+- [x] Set both durations to 4 ghatikas (= `span/15`, since the code treats the nakshatra span as 60 ghatikas):
 
 ```ts
 export const VARJYAM_DURATION_GHATIKAS = 4; // = span/15 (nakshatra span modeled as 60 ghatikas)
 export const AMRIT_KALAM_DURATION_GHATIKAS = 4;
 ```
 
-- [ ] Commit: `fix(muhurta): varjyam/amrit duration = nakshatra span/15`.
+- [x] Commit: `fix(muhurta): varjyam/amrit duration = nakshatra span/15`.
 
 ### Task 3.2: Window membership filter
 
 **Files:**
 - Modify: `src/api/get-panchang.ts` (lines 280–298)
 
-- [ ] Only keep a window when it intersects the panchang day `[sunriseJd, nextSunriseJd)` (a window may legitimately cross midnight). Do not clip — drik prints the full window with a `, Oct 17` label.
+- [x] Only keep a window when it intersects the panchang day `[sunriseJd, nextSunriseJd)` (a window may legitimately cross midnight). Do not clip — drik prints the full window with a `, Oct 17` label.
 
 ```ts
 const inDay = (w: { start: string; end: string }) =>
@@ -589,7 +589,7 @@ const inDay = (w: { start: string; end: string }) =>
 // push varjyam/amrit windows through inDay(...)
 ```
 
-- [ ] Commit: `fix(panchang): varjyam/amrit windows limited to the sunrise-to-sunrise day`.
+- [x] Commit: `fix(panchang): varjyam/amrit windows limited to the sunrise-to-sunrise day`.
 
 ### Task 3.3: Fit the varjyam/amrit offsets against fixtures
 
@@ -597,11 +597,11 @@ const inDay = (w: { start: string; end: string }) =>
 - Modify: `src/constants/muhurta.ts`, `src/calculations/muhurta.ts` (`varjyamWindow`, `amritKalamWindow`)
 - Test: `test/drik-varjyam.test.ts` (new)
 
-- [ ] Write a fitting test that, for the captured fixtures, compares the ordered set of our varjyam/amrit windows to drik's and prints the per-nakshatra offset error. Use `test/drik-helpers.ts`; run `npx vitest run test/drik-varjyam.test.ts --reporter=verbose`.
-- [ ] Confirm the Mula anchor: with the offset table unchanged, our Mula varjyam must equal `nakStart + 56/60·span → 22:29–00:17` Suwanee (matches drik). If it does not, first fix the `nakStartJd` wiring in `get-panchang.ts` (lines 286/293 use `nak.starts_at ?? nak.ends_at`; a `null` `starts_at` silently anchors to the end — that is a real bug; pass the true nakshatra start).
-- [ ] Derive the amrit offset from the fixtures: for Mula on 2026-10-16 the value is `44/60` (= `varjyam offset − 12`). Determine whether `amritOffset = (varjyamOffset − 12 + 60) % 60` holds across all sampled nakshatras. If it does, set `AMRIT_OFFSET_GHATIKAS = 48` (i.e. `−12 mod 60`). If it does **not**, replace the derived-constant approach with a per-nakshatra `AMRIT_GHATIKAS` table filled from the fixtures.
-- [ ] If the sampled dates do not cover all 27 nakshatras, request user approval to add the 2026-10-01..10-31 New Delhi sweep (Task 0.3 note), then re-run capture.
-- [ ] Flip the varjyam/amrit parity assertions to `it`. Commit: `fix(muhurta): fit varjyam/amrit offsets to drik fixtures`.
+- [x] Write a fitting test that, for the captured fixtures, compares the ordered set of our varjyam/amrit windows to drik's and prints the per-nakshatra offset error. Use `test/drik-helpers.ts`; run `npx vitest run test/drik-varjyam.test.ts --reporter=verbose`.
+- [x] Confirm the Mula anchor: with the offset table unchanged, our Mula varjyam must equal `nakStart + 56/60·span → 22:29–00:17` Suwanee (matches drik). If it does not, first fix the `nakStartJd` wiring in `get-panchang.ts` (lines 286/293 use `nak.starts_at ?? nak.ends_at`; a `null` `starts_at` silently anchors to the end — that is a real bug; pass the true nakshatra start).
+- [x] Derive the amrit offset from the fixtures: for Mula on 2026-10-16 the value is `44/60` (= `varjyam offset − 12`). Determine whether `amritOffset = (varjyamOffset − 12 + 60) % 60` holds across all sampled nakshatras. If it does, set `AMRIT_OFFSET_GHATIKAS = 48` (i.e. `−12 mod 60`). If it does **not**, replace the derived-constant approach with a per-nakshatra `AMRIT_GHATIKAS` table filled from the fixtures.
+- [x] If the sampled dates do not cover all 27 nakshatras, request user approval to add the 2026-10-01..10-31 New Delhi sweep (Task 0.3 note), then re-run capture.
+- [x] Flip the varjyam/amrit parity assertions to `it`. Commit: `fix(muhurta): fit varjyam/amrit offsets to drik fixtures`.
 
 ---
 
@@ -612,23 +612,23 @@ const inDay = (w: { start: string; end: string }) =>
 **Files:**
 - (no source change yet)
 
-- [ ] `npm run build` then `node /private/var/folders/18/1kxryyzs0hv1lkg16rxwdp8c0000gn/T/opencode/compare.js`.
-- [ ] If `moonrise`/`moonset` are now within 1 min of drik (`13:34`/`22:58` Suwanee EDT), the committed `dist/` was stale — record this in the commit message and skip Task 4.2.
-- [ ] Commit (if a rebuild changes `dist/`): `build: rebuild dist so moonrise/moonset include the parallax fix`.
+- [x] `npm run build` then `node /private/var/folders/18/1kxryyzs0hv1lkg16rxwdp8c0000gn/T/opencode/compare.js`.
+- [x] If `moonrise`/`moonset` are now within 1 min of drik (`13:34`/`22:58` Suwanee EDT), the committed `dist/` was stale — record this in the commit message and skip Task 4.2.
+- [x] Commit (if a rebuild changes `dist/`): `build: rebuild dist so moonrise/moonset include the parallax fix`.
 
 ### Task 4.2: Only if residual drift remains
 
 **Files:**
 - Modify: `src/ephemeris/browser.ts` (`ALT0_MOON`, line 62)
 
-- [ ] Drik's Suwanee day has midpoint-symmetric drift vs ours (ours rises early and sets late → our effective horizon is lower). Try `ALT0_MOON = -0.5667` (Moon's centre + refraction, no semidiameter) and re-measure against the fixtures. Pick the value minimizing |Δ| across all fixture locations/dates. Document the convention chosen in a comment.
-- [ ] Test: assert moonrise/moonset within 2 min for the captured fixtures; mark the `describe` non-gating in the file.
-- [ ] Commit: `fix(ephemeris): tune moonrise/moonset horizon to drik convention`.
+- [x] Drik's Suwanee day has midpoint-symmetric drift vs ours (ours rises early and sets late → our effective horizon is lower). Try `ALT0_MOON = -0.5667` (Moon's centre + refraction, no semidiameter) and re-measure against the fixtures. Pick the value minimizing |Δ| across all fixture locations/dates. Document the convention chosen in a comment.
+- [x] Test: assert moonrise/moonset within 2 min for the captured fixtures; mark the `describe` non-gating in the file.
+- [x] Commit: `fix(ephemeris): tune moonrise/moonset horizon to drik convention`.
 
 ### Task 4.3: Document residual drift
 
-- [ ] Add a `README.md` note (and a comment in `sunrise.ts`) recording the chosen convention and any remaining per-location drift, explicitly stating it is not release-gated.
-- [ ] Commit: `docs: note moonrise/moonset convention and residual drift`.
+- [x] Add a `README.md` note (and a comment in `sunrise.ts`) recording the chosen convention and any remaining per-location drift, explicitly stating it is not release-gated.
+- [x] Commit: `docs: note moonrise/moonset convention and residual drift`.
 
 ---
 
@@ -640,18 +640,18 @@ const inDay = (w: { start: string; end: string }) =>
 - Modify: `src/calculations/calendars.ts` (`computeTamilCalendar`, line 302), `src/api/get-panchang.ts` (call at line 376)
 - Test: `test/drik-tamil.test.ts` (new)
 
-- [ ] `computeTamilCalendar` currently hardcodes `const shakaYear = gregYear - 78;` (line 302). Add a `shakaYear: number` parameter and use it; drop `gregYear` if unused.
-- [ ] Update the caller to pass `calInfo.shakaYear`.
-- [ ] From the fixtures establish **which boundary** drik uses for the Tamil year name: the Shaka samvatsara rolls at Chaitra Shukla 1 (Mar 19 in 2026), but the Tamil year (Chithirai 1) rolls at Mesha sankranti (~Apr 14). Capture drik's `/tamil/tamil-panchangam.html?geoname-id=<chennai>&date=...` for 2026-03-18, 2026-03-19, 2026-04-13, 2026-04-15 and record which name flips on which day; encode the observed boundary. Extend the capture script with a `--tamil` mode and commit the extra JSON.
-- [ ] Test: `tamil_year` name and `tamil_month` name match drik for the Tamil fixtures; `tamil_date` matches (within the same civil day).
-- [ ] Commit: `fix(tamil): correct year boundary and month parity against drik`.
+- [x] `computeTamilCalendar` currently hardcodes `const shakaYear = gregYear - 78;` (line 302). Add a `shakaYear: number` parameter and use it; drop `gregYear` if unused.
+- [x] Update the caller to pass `calInfo.shakaYear`.
+- [x] From the fixtures establish **which boundary** drik uses for the Tamil year name: the Shaka samvatsara rolls at Chaitra Shukla 1 (Mar 19 in 2026), but the Tamil year (Chithirai 1) rolls at Mesha sankranti (~Apr 14). Capture drik's `/tamil/tamil-panchangam.html?geoname-id=<chennai>&date=...` for 2026-03-18, 2026-03-19, 2026-04-13, 2026-04-15 and record which name flips on which day; encode the observed boundary. Extend the capture script with a `--tamil` mode and commit the extra JSON.
+- [x] Test: `tamil_year` name and `tamil_month` name match drik for the Tamil fixtures; `tamil_date` matches (within the same civil day).
+- [x] Commit: `fix(tamil): correct year boundary and month parity against drik`.
 
 ### Task 5.2: Nalla Neram parity
 
 **Files:**
 - Modify: `src/calculations/nalla-neram.ts` (only if fixtures disagree)
 
-- [ ] Compare `nalla_neram` from the public API to drik's Tamil page for at least the Chennai fixtures. If it diverges, fix the hora selection to match (the Tamil page lists Nalla Neram as hora windows). Commit only if a change is needed: `fix(tamil): match nalla neram to drik`.
+- [x] Compare `nalla_neram` from the public API to drik's Tamil page for at least the Chennai fixtures. If it diverges, fix the hora selection to match (the Tamil page lists Nalla Neram as hora windows). Commit only if a change is needed: `fix(tamil): match nalla neram to drik`.
 
 ---
 
@@ -662,25 +662,25 @@ const inDay = (w: { start: string; end: string }) =>
 **Files:**
 - Modify: `package.json` (`"version": "0.5.0"`), `README.md`
 
-- [ ] Bump to `0.5.0` (published values change — Shaka/Vikram/Gujarati/Kali years, purnimanta, five muhurta windows, varjyam/amrit).
-- [ ] Add a README "DrikPanchang parity" section: what conventions are now default, the fixture capture workflow (`node scripts/capture-drik-fixtures.mjs`), that tests are offline, and the moonrise/moonset caveat.
-- [ ] Commit: `chore: release 0.5.0 with drik-convention defaults`.
+- [x] Bump to `0.5.0` (published values change — Shaka/Vikram/Gujarati/Kali years, purnimanta, five muhurta windows, varjyam/amrit).
+- [x] Add a README "DrikPanchang parity" section: what conventions are now default, the fixture capture workflow (`node scripts/capture-drik-fixtures.mjs`), that tests are offline, and the moonrise/moonset caveat.
+- [x] Commit: `chore: release 0.5.0 with drik-convention defaults`.
 
 ### Task 6.2: Full verification sweep
 
 **Files:**
 - Test: `test/drik-parity.test.ts`
 
-- [ ] Flip **all** remaining `it.todo` to `it`.
-- [ ] Run: `npm run build && npm test` → all suites pass.
-- [ ] Run the full parity suite with `--reporter=verbose` and confirm zero failures across every fixture (report the max absolute minute delta per field).
-- [ ] `git status` — confirm only source/tests/fixtures/README/package.json changed; no HTML.
-- [ ] Commit: `test(drik): enable full parity suite (0.5.0)`.
+- [x] Flip **all** remaining `it.todo` to `it`.
+- [x] Run: `npm run build && npm test` → all suites pass.
+- [x] Run the full parity suite with `--reporter=verbose` and confirm zero failures across every fixture (report the max absolute minute delta per field).
+- [x] `git status` — confirm only source/tests/fixtures/README/package.json changed; no HTML.
+- [x] Commit: `test(drik): enable full parity suite (0.5.0)`.
 
 ### Task 6.3: Cross-check the reference day one more time
 
-- [ ] Rebuild `dist/` and run the comparison for `2026-10-16` Suwanee GA; paste the field-by-field table into the final report and confirm every row in the "Background" table above now matches drik within 1 min (moonrise/moonset within 2 min).
-- [ ] Commit: `chore: rebuild dist for 0.5.0`.
+- [x] Rebuild `dist/` and run the comparison for `2026-10-16` Suwanee GA; paste the field-by-field table into the final report and confirm every row in the "Background" table above now matches drik within 1 min (moonrise/moonset within 2 min).
+- [x] Commit: `chore: rebuild dist for 0.5.0`.
 
 ---
 

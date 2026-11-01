@@ -124,7 +124,7 @@ vedic-panchanga/
 - Create: `test/helpers.ts`
 - Create: `src/types.ts`
 
-- [ ] **Step 1: Create package.json**
+- [x] **Step 1: Create package.json**
 
 ```json
 {
@@ -154,7 +154,7 @@ vedic-panchanga/
 }
 ```
 
-- [ ] **Step 2: Create tsconfig.json**
+- [x] **Step 2: Create tsconfig.json**
 
 ```json
 {
@@ -178,7 +178,7 @@ vedic-panchanga/
 }
 ```
 
-- [ ] **Step 3: Create eslint.config.js** (flat config, minimal)
+- [x] **Step 3: Create eslint.config.js** (flat config, minimal)
 
 ```js
 export default [
@@ -191,7 +191,7 @@ export default [
 ];
 ```
 
-- [ ] **Step 4: Create test setup**
+- [x] **Step 4: Create test setup**
 
 ```typescript
 // test/setup.ts
@@ -205,7 +205,7 @@ beforeAll(() => {
 });
 ```
 
-- [ ] **Step 5: Create test helpers**
+- [x] **Step 5: Create test helpers**
 
 ```typescript
 // test/helpers.ts
@@ -233,7 +233,7 @@ export function approxEqual(a: number, b: number, tol: number = 1e-4): boolean {
 }
 ```
 
-- [ ] **Step 6: Create types.ts** — Copy the complete `src/types.ts` from the design spec doc. All interfaces: `Locale`, `Planet`, `AyanamsaId`, `VargaNumber`, `NamedEntity`, `TimeWindow`, `GeoLocation`, `BirthInfo`, `PlanetPosition`, `PanchangItem`, `Vara`, `SunSign`, `MoonSign`, `NakshatraPada`, `Chandrabalam`, `Tarabalam`, `VargaChart`, `Mahadasha`, `Antardasha`, `Pratyantar`, `Karaka`, `FriendshipTables`, `KalsarpaResult`, `AshtakavargaResult`, `AspectEdge`, `AspectResult`, `GowriSegment`, `GowriPanchanga`, `HoraSegment`, `Hora`, `Tyajyam`, `TamilCalendar`, `PanchangResponse`, `ChartResponse`, `LocaleTable`.
+- [x] **Step 6: Create types.ts** — Copy the complete `src/types.ts` from the design spec doc. All interfaces: `Locale`, `Planet`, `AyanamsaId`, `VargaNumber`, `NamedEntity`, `TimeWindow`, `GeoLocation`, `BirthInfo`, `PlanetPosition`, `PanchangItem`, `Vara`, `SunSign`, `MoonSign`, `NakshatraPada`, `Chandrabalam`, `Tarabalam`, `VargaChart`, `Mahadasha`, `Antardasha`, `Pratyantar`, `Karaka`, `FriendshipTables`, `KalsarpaResult`, `AshtakavargaResult`, `AspectEdge`, `AspectResult`, `GowriSegment`, `GowriPanchanga`, `HoraSegment`, `Hora`, `Tyajyam`, `TamilCalendar`, `PanchangResponse`, `ChartResponse`, `LocaleTable`.
 
 The exact type definitions are in the design spec `docs/vedic-panchanga-js-library-design.md` section 3. Copy verbatim, with these additions:
 
@@ -260,20 +260,20 @@ export class ChartError extends Error {
 }
 ```
 
-- [ ] **Step 7: Install dependencies**
+- [x] **Step 7: Install dependencies**
 
 ```bash
 npm install
 ```
 
-- [ ] **Step 8: Verify compilation**
+- [x] **Step 8: Verify compilation**
 
 ```bash
 npx tsc --noEmit
 ```
 Expected: No errors (types.ts has no implementation dependencies).
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add package.json tsconfig.json eslint.config.js test/setup.ts test/helpers.ts src/types.ts
@@ -324,7 +324,7 @@ export default {
 }
 ```
 
-- [ ] **Step 1: Create en.ts** — Full English locale table. Source the exact array values from the backend:
+- [x] **Step 1: Create en.ts** — Full English locale table. Source the exact array values from the backend:
   - `constants.py` → TITHI_BASE, NAKSHATRAS, YOGAS, MOVABLE_KARANAS, VARA_NAMES, VARA_ENGLISH, SIGNS
   - `calculator.py` → NAKSHATRA_LORDS, SIGN_LORDS, SIGNS
   - `panchang_constants.py` → SAMVATSARAS, CHANDRA_MASA, NIRAYANA_MONTHS, SHAKA_MONTHS, SIGN_TO_VEDIC_RITU, SIGN_TO_DRIK_RITU, RASHI_NAMES
@@ -454,7 +454,7 @@ const locale: LocaleTable = {
 export default locale;
 ```
 
-- [ ] **Step 2: Create hi.ts** — Full Hindi locale table with Devanagari script. Same structure as en.ts. Translate all names:
+- [x] **Step 2: Create hi.ts** — Full Hindi locale table with Devanagari script. Same structure as en.ts. Translate all names:
 
 ```typescript
 // src/locales/hi.ts
@@ -569,7 +569,7 @@ const locale: LocaleTable = {
 export default locale;
 ```
 
-- [ ] **Step 3: Create ta.ts** — Full Tamil locale table with Tamil script. Same structure.
+- [x] **Step 3: Create ta.ts** — Full Tamil locale table with Tamil script. Same structure.
 
 ```typescript
 // src/locales/ta.ts
@@ -684,7 +684,7 @@ const locale: LocaleTable = {
 export default locale;
 ```
 
-- [ ] **Step 4: Create locale resolver**
+- [x] **Step 4: Create locale resolver**
 
 ```typescript
 // src/locales/index.ts
@@ -724,14 +724,14 @@ export function getLocaleTable(locale: Locale): LocaleTable {
 }
 ```
 
-- [ ] **Step 5: Verify compilation**
+- [x] **Step 5: Verify compilation**
 
 ```bash
 npx tsc --noEmit
 ```
 Expected: No errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/locales/
@@ -752,7 +752,7 @@ git commit -m "feat: add locale system with en, hi, ta"
 
 All constant files are pure data. Source every value from the corresponding Python backend file.
 
-- [ ] **Step 1: Create src/constants/panchang.ts**
+- [x] **Step 1: Create src/constants/panchang.ts**
 
 ```typescript
 // Tithi, nakshatra, yoga, karana, vara constants (language-agnostic)
@@ -799,7 +799,7 @@ export function tithiName(index: number): string {
 }
 ```
 
-- [ ] **Step 2: Create src/constants/vargas.ts**
+- [x] **Step 2: Create src/constants/vargas.ts**
 
 ```typescript
 // Varga (divisional chart) definitions
@@ -861,7 +861,7 @@ export function computeVargaStartSign(signId: number, varga: number, part: numbe
 }
 ```
 
-- [ ] **Step 3: Create src/constants/planets.ts**
+- [x] **Step 3: Create src/constants/planets.ts**
 
 ```typescript
 // Planet-related constants
@@ -1003,7 +1003,7 @@ export const BAV_RULES: Record<string, Record<string, number[]>> = {
 export const BAV_CONTRIBUTORS = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Asc'];
 ```
 
-- [ ] **Step 4: Create src/constants/muhurta.ts**
+- [x] **Step 4: Create src/constants/muhurta.ts**
 
 ```typescript
 // Muhurta-related constants
@@ -1150,7 +1150,7 @@ export const SUKRA_ASTHAMANAM_ORB_DIRECT = 10;
 export const SUKRA_ASTHAMANAM_ORB_RETRO = 8;
 ```
 
-- [ ] **Step 5: Create src/constants/calendars.ts**
+- [x] **Step 5: Create src/constants/calendars.ts**
 
 ```typescript
 // Calendar-related constants
@@ -1219,7 +1219,7 @@ export const SIGN_TO_VEDIC_RITU: Record<number, string> = {
 };
 ```
 
-- [ ] **Step 6: Create barrel export**
+- [x] **Step 6: Create barrel export**
 
 ```typescript
 // src/constants/index.ts
@@ -1230,13 +1230,13 @@ export * from './muhurta';
 export * from './calendars';
 ```
 
-- [ ] **Step 7: Verify compilation**
+- [x] **Step 7: Verify compilation**
 
 ```bash
 npx tsc --noEmit
 ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/constants/
@@ -1251,7 +1251,7 @@ git commit -m "feat: add constants (panchang, vargas, planets, muhurta, calendar
 - Create: `src/ephemeris/index.ts`
 - Test: Panchang and chart tests will validate indirectly
 
-- [ ] **Step 1: Create ephemeris adapter**
+- [x] **Step 1: Create ephemeris adapter**
 
 ```typescript
 // src/ephemeris/index.ts
@@ -1386,13 +1386,13 @@ export const SE = {
 };
 ```
 
-- [ ] **Step 2: Verify compilation**
+- [x] **Step 2: Verify compilation**
 
 ```bash
 npx tsc --noEmit
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/ephemeris/
@@ -1407,7 +1407,7 @@ git commit -m "feat: add Swiss Ephemeris adapter"
 - Create: `src/calculations/bisection.ts`
 - Test: `test/bisection.test.ts`
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 ```typescript
 // test/bisection.test.ts
@@ -1449,14 +1449,14 @@ describe('bisection', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 npx vitest run test/bisection.test.ts --reporter=verbose 2>&1 | head -20
 ```
 Expected: FAIL with "Cannot find module" or "function not defined".
 
-- [ ] **Step 3: Implement bisection**
+- [x] **Step 3: Implement bisection**
 
 ```typescript
 // src/calculations/bisection.ts
@@ -1519,14 +1519,14 @@ export function findAngleTime(
 }
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 ```bash
 npx vitest run test/bisection.test.ts --reporter=verbose
 ```
 Expected: All 5 tests PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/calculations/bisection.ts test/bisection.test.ts
@@ -1541,7 +1541,7 @@ git commit -m "feat: add bisection search engine"
 - Create: `src/calculations/panchang.ts`
 - Test: `test/panchang.test.ts`
 
-- [ ] **Step 1: Write partial test**
+- [x] **Step 1: Write partial test**
 
 ```typescript
 // test/panchang.test.ts
@@ -1588,9 +1588,9 @@ describe('panchang limb indices', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails** — Expected: FAIL (module not found)
+- [x] **Step 2: Run test to verify it fails** — Expected: FAIL (module not found)
 
-- [ ] **Step 3: Implement panchang limb generators**
+- [x] **Step 3: Implement panchang limb generators**
 
 ```typescript
 // src/calculations/panchang.ts
@@ -1677,14 +1677,14 @@ export function formatDms(deg: number): string {
 }
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 ```bash
 npx vitest run test/panchang.test.ts --reporter=verbose
 ```
 Expected: All tests PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/calculations/panchang.ts test/panchang.test.ts
