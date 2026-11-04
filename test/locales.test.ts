@@ -15,12 +15,13 @@ describe('Locale tables — en', () => {
     expect(table.nakshatras[26]).toBe('Revati');
   });
 
-  it('has 30 tithis with empty slot at index 0', () => {
-    // total array length = 30 (indices 0..29; 0 is empty placeholder)
+  it('has 31 tithis with empty slot at index 0', () => {
+    // total array length = 31 (indices 0..30; 0 is empty placeholder)
     expect(table.tithis[0]).toBe('');
     expect(table.tithis[1]).toBe('Pratipada');
     expect(table.tithis[15]).toBe('Purnima');
-    expect(table.tithis[29]).toBe('Amavasya');
+    expect(table.tithis[29]).toBe('Chaturdashi');
+    expect(table.tithis[30]).toBe('Amavasya');
   });
 
   it('has 12 rashis and signs', () => {
@@ -57,8 +58,8 @@ describe('Locale tables — en', () => {
 
   it('has 8 vara entries (1-indexed, index 0 empty)', () => {
     expect(table.varas[0]).toBe('');
-    expect(table.varas[1]).toBe('Somavara');
-    expect(table.varas[7]).toBe('Ravivara');
+    expect(table.varas[1]).toBe('Somawara');
+    expect(table.varas[7]).toBe('Raviwara');
     expect(table.varaEnglish[7]).toBe('Sunday');
   });
 

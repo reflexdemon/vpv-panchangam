@@ -114,8 +114,9 @@ export class EphemerisService {
     body: number,
     geopos: [number, number, number],
     which: number,
+    alt0?: number,
   ): number | null {
-    return this._ephe.riseTrans(jd, body, geopos, which);
+    return this._ephe.riseTrans(jd, body, geopos, which, alt0);
   }
 
   /** Get current ayanamsa value (degrees) at a given JD. */

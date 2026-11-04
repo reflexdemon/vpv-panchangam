@@ -84,6 +84,7 @@ export interface IEphemeris {
     body: number,
     geopos: [number, number, number],
     which: number,
+    alt0?: number,
   ): number | null;
 
   /** Ayanamsa value (degrees) at a given JD. */

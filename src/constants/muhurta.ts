@@ -6,11 +6,24 @@ export const VARJYAM_GHATIKAS = [
   50, 24, 30, 40, 14, 21, 30, 20, 32, 30, 20, 18, 21, 20, 14, 14, 10, 14, 56,
   24, 20, 10, 10, 18, 16, 24, 30,
 ];
-export const VARJYAM_DURATION_GHATIKAS = 1.6; // ~38.4 min
+export const VARJYAM_DURATION_GHATIKAS = 4; // = nakshatra-span/15 (span modelled as 60 gh)
 
-// Amrit Kalam = (Varjyam + 26.67) mod 60
-export const AMRIT_OFFSET_GHATIKAS = 26.67;
-export const AMRIT_KALAM_DURATION_GHATIKAS = 1.6;
+// Some nakshatras have a second varjyam window per transit. Null means no second window.
+// Currently only Mula (idx=18) is known to have a second at offset 20 gh (the primary
+// one listed by drik; offset 56 is the secondary that ends at nak-end).
+export const VARJYAM_GHATIKAS_2: (number | null)[] = [
+  null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+  null, null, null, null, 20,   null, null, null, null, null, null, null, null,
+];
+
+// Amrit Kalam starting ghatika (out of 60) per nakshatra index 0-26 (Ashwini=0).
+// Fitted from drik fixtures: for all sampled nakshatras except Mula (idx=18)
+// the offset is (VARJYAM_GHATIKAS[i] + 24) % 60; Mula is set empirically to 44.
+export const AMRIT_GHATIKAS = [
+  14, 48, 54,  4, 38, 45, 54, 44, 56, 54, 44, 42, 45, 44, 38, 38, 34, 38, 44,
+  48, 44, 34, 34, 42, 40, 48, 54,
+];
+export const AMRIT_KALAM_DURATION_GHATIKAS = 4; // = nakshatra-span/15
 
 // Sarvartha Siddhi Yoga: ISO weekday → set of nakshatra indices (0-26)
 export const SARVARTHA_SIDDHI: Record<number, Set<number>> = {
@@ -38,10 +51,10 @@ export const AMRITA_SIDDHI: Record<number, Set<number>> = {
 // Source: backend/panchang_constants.py DUR_MUHURTA
 export const DUR_MUHURTA: Record<number, number[]> = {
   1: [9, 12], // Mon
-  2: [4], // Tue
+  2: [4, 22], // Tue (22 = night muhurta 7; fitted from drik fixtures)
   3: [8], // Wed (coincides with Abhijit — suppressed that day)
-  4: [6], // Thu
-  5: [4], // Fri
+  4: [6, 12], // Thu (fitted from drik fixtures)
+  5: [4, 9], // Fri (fitted from drik fixtures)
   6: [1, 2], // Sat
   7: [14], // Sun
 };
@@ -185,7 +198,11 @@ export const VARA_TYAJYAM_NAZHIGAI: Record<number, number> = {
 export const VARA_TYAJYAM_DURATION_MIN = 90;
 
 // Inauspicious karanas — their full span is treated as Karana Tyajyam
-export const INAUSPICIOUS_KARANAS = new Set(["Vishti", "Chatushpada", "Naga"]);
+export const INAUSPICIOUS_KARANAS = new Set([
+  "Vishti",
+  "Chatushpada",
+  "Nagava",
+]);
 
 // Lagna defect position per sign name (for Lagna Tyajyam)
 export const LAGNA_DEFECT_POSITION: Record<string, string> = {

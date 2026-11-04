@@ -47,7 +47,7 @@ export const MOVABLE_KARANA_NAMES = [
   "Balava",
   "Kaulava",
   "Taitila",
-  "Gara",
+  "Garaja",
   "Vanija",
   "Vishti",
 ];
@@ -57,13 +57,13 @@ export const MOVABLE_KARANA_NAMES = [
  * 0 = Kimstughna (fixed), 1-56 = movable cycle, 57-59 = Shakuni/Chatushpada/Naga.
  */
 export function karanaName(halfIndex: number): string {
-  if (halfIndex === 0) return "Kimstughna";
+  if (halfIndex === 0) return "Kinstughna";
   if (halfIndex >= 1 && halfIndex <= 56) {
     return MOVABLE_KARANA_NAMES[(halfIndex - 1) % 7];
   }
   if (halfIndex === 57) return "Shakuni";
   if (halfIndex === 58) return "Chatushpada";
-  if (halfIndex === 59) return "Naga";
+  if (halfIndex === 59) return "Nagava";
   return "Unknown";
 }
 

@@ -12,10 +12,10 @@ import {
   SIGN_TO_DRIK_RITU,
   SIGN_TO_VEDIC_RITU,
   UTTARAYANA_SIGNS,
-  CHANDRA_MASA_BY_SUNSIGN,
+  AMANTA_MONTHS,
   NATIONAL_CIVIL_MONTHS,
 } from "../constants/calendars";
-import { signIdFromLon } from "./panchang";
+import { signIdFromLon, tithiIndex } from "./panchang";
 
 const SIDEREAL_FLAGS = () => SE.FLG_SWIEPH | SE.FLG_SPEED | SE.FLG_SIDEREAL;
 
@@ -61,6 +61,59 @@ export function dateToJd(
   return ephe.julday(year, month, day, 12.0);
 }
 
+const TROP_FLAGS = () => SE.FLG_SWIEPH | SE.FLG_SPEED;
+
+export function elongationAt(jd: number, ephe: EphemerisService): number {
+  const s = ephe.calcUt(jd, SE.SUN, TROP_FLAGS()).lon;
+  const m = ephe.calcUt(jd, SE.MOON, TROP_FLAGS()).lon;
+  return (((m - s) % 360) + 360) % 360;
+}
+
+/** JD of the last new moon (elongation 0°) at or before `jd`. */
+export function lastNewMoonBefore(jd: number, ephe: EphemerisService): number {
+  let hi = jd;
+  for (let i = 0; i < 35; i++) {
+    const lo = hi - 1;
+    if (elongationAt(lo, ephe) > elongationAt(hi, ephe)) {
+      return findAngleTime(lo, hi, 0, (t) => elongationAt(t, ephe)) ?? hi;
+    }
+    hi = lo;
+  }
+  return jd - 29.530588;
+}
+
+/** Sidereral Sun enters `signId` (1=Aries..12=Pisces) — the sankranti nearest the 1st of `month`. */
+function sankrantiInMonth(
+  year: number,
+  month: number,
+  signId: number,
+  ephe: EphemerisService,
+): number {
+  const lo = dateToJd(year, month, 1, ephe) - 5;
+  const hi = dateToJd(year, month, 28, ephe) + 5;
+  const target = (signId - 1) * 30;
+  return (
+    findAngleTime(
+      lo,
+      hi,
+      target,
+      (t) => ephe.calcUt(t, SE.SUN, SIDEREAL_FLAGS()).lon,
+    ) ?? dateToJd(year, month, 15, ephe)
+  );
+}
+
+/** Chaitra Shukla Pratipada instant for the Shaka year that begins in Gregorian `year`. */
+export function chaitraShukla1Jd(year: number, ephe: EphemerisService): number {
+  const mesha = sankrantiInMonth(year, 4, 1, ephe); // Sun enters Aries in April
+  return lastNewMoonBefore(mesha, ephe);
+}
+
+/** Kartik Shukla Pratipada instant (≈ Diwali) in Gregorian `year`. */
+export function kartikShukla1Jd(year: number, ephe: EphemerisService): number {
+  const vrischika = sankrantiInMonth(year, 11, 8, ephe); // Sun enters Scorpio in November
+  return lastNewMoonBefore(vrischika, ephe);
+}
+
 /**
  * Compute all calendar values for a given Julian Day (at sunrise, noon, or any UT).
  */
@@ -81,20 +134,32 @@ export function computeCalendars(
 
   // Kali Ahargana: elapsed days from Kali epoch
   const kaliAhargana = Math.floor(jd - KALI_START_JD);
-  // Kali year (approximate): elapsed since 3102 BCE
-  const kaliYear = Math.floor(kaliAhargana / 365.25) + 1;
 
-  // Shaka Samvat: tropical year CE − 78 for Mesha ingress
-  // Simplified: Shaka = CE year − 78 (before Mesha) or CE year − 77 (after)
-  const [gregYear, gregMonth, gregDay, gregHour] = ephe.revjul(jd);
-  const afterMeshaIngress = sunLon >= 0; // Sun past 0° sidereal Aries
-  const shakaYear = gregYear - (afterMeshaIngress ? 77 : 78);
+  // Shaka year increments on Chaitra Shukla Pratipada (the new moon before the
+  // Mesha sankranti), not at Mesha ingress.
+  const [gregYear, gregMonth, gregDay] = ephe.revjul(jd);
+  const chaitraThis = chaitraShukla1Jd(gregYear, ephe);
+  const shakaYear = jd >= chaitraThis ? gregYear - 78 : gregYear - 79;
 
-  // Vikram Samvat: Shaka + 135
+  // Vikram Samvat = Shaka + 135
   const vikramYear = shakaYear + 135;
 
-  // Gujarati Samvat: Vikram − 1 (new year is Kartik Shukla Pratipada)
-  const gujaratiYear = vikramYear - 1;
+  // Kali year = Shaka + 3179
+  const kaliYear = shakaYear + 3179;
+
+  // Gujarati Samvat = Vikram − 1 between Chaitra Shukla 1 and Kartik Shukla 1; else Vikram.
+  // The Chaitra end of that window tracks the Shaka/Vikram roll (the new-moon
+  // date, compared against `jd` above). The Kartik new year (Bestu Varas) is the
+  // day Kartik Shukla Pratipada is current at **sunrise** — the panchang day
+  // boundary — which is why Gujarati is location-dependent on the boundary day
+  // (e.g. 2026-11-09: Delhi/Chennai sunrise precedes the 07:02 UT new moon → 2082;
+  // London sunrise follows it → 2083).
+  const chaitraPrev = chaitraShukla1Jd(gregYear - 1, ephe);
+  const kartikThis = kartikShukla1Jd(gregYear, ephe);
+  const kartikPrev = kartikShukla1Jd(gregYear - 1, ephe);
+  const lastChaitra = jd >= chaitraThis ? chaitraThis : chaitraPrev;
+  const lastKartik = sunriseJd >= kartikThis ? kartikThis : kartikPrev;
+  const gujaratiYear = lastChaitra > lastKartik ? vikramYear - 1 : vikramYear;
 
   // Samvatsara (60-year cycle)
   // Shaka samvatsara = (shaka_year + 11) % 60
@@ -108,13 +173,28 @@ export function computeCalendars(
   const sunSignId = signIdFromLon(sunLon); // 1-12
   const niraayanaSolarMonth = getNirayanaSolarMonth(sunSignId - 1); // 0-based
 
-  // Chandramasa (lunar month) from Sun sign
-  const chandramasaAmanta = CHANDRA_MASA_BY_SUNSIGN[(sunSignId - 1 + 12) % 12];
-  // Purnimanta is one month ahead
-  const chandramasaPurnimanta = CHANDRA_MASA_BY_SUNSIGN[sunSignId % 12];
+  // Amanta lunar month = the month begun by the last new moon before sunrise,
+  // named by the Sun's sidereal sign at that new moon (Meena → Chaitra).
+  // Purnimanta = amanta during Shukla paksha, next month during Krishna paksha.
+  // The paksha is taken at sunrise (the panchang day boundary): the noon tithi
+  // can differ, e.g. 2026-03-19 where Amavasya ends 06:52 after sunrise 06:26.
+  const lastNm = lastNewMoonBefore(sunriseJd, ephe);
+  const sunSignAtNm = signIdFromLon(
+    ephe.calcUt(lastNm, SE.SUN, SIDEREAL_FLAGS()).lon,
+  ); // 1..12
+  const amantaIdx = sunSignAtNm % 12;
+  const chandramasaAmanta = AMANTA_MONTHS[amantaIdx];
+  const tithiIdxAtSunrise = tithiIndex(
+    ephe.calcUt(sunriseJd, SE.SUN, SIDEREAL_FLAGS()).lon,
+    ephe.calcUt(sunriseJd, SE.MOON, SIDEREAL_FLAGS()).lon,
+  );
+  const chandramasaPurnimanta =
+    tithiIdxAtSunrise <= 15
+      ? chandramasaAmanta
+      : AMANTA_MONTHS[(amantaIdx + 1) % 12];
 
   // Paksha
-  const paksha = tithiIdx <= 15 ? "Shukla Paksha" : "Krishna Paksha";
+  const paksha = tithiIdxAtSunrise <= 15 ? "Shukla Paksha" : "Krishna Paksha";
 
   // Pravishte days: days elapsed since new moon / full moon
   const pravishteDays = tithiIdx <= 15 ? tithiIdx : tithiIdx - 15;
@@ -127,9 +207,21 @@ export function computeCalendars(
     : "Dakshinayana";
   const vedicAyana = drikAyana;
 
-  // National Civil Calendar (Indian Saka National Calendar)
-  const nationalCivil = computeNationalCivilDate(jd, shakaYear, false);
-  const nationalNirayana = computeNationalCivilDate(jd, shakaYear, true);
+  // National Civil Calendar (Indian Saka National Calendar) is solar: Chaitra 1
+  // is Mar 22 (Mar 21 in leap years), not the lunar Chaitra Shukla Pratipada
+  // used by the Shaka year above.
+  const nationalShakaYear =
+    gregMonth > 3 ||
+    (gregMonth === 3 && gregDay >= (isGregorianLeap(gregYear) ? 21 : 22))
+      ? gregYear - 78
+      : gregYear - 79;
+  // `_nirayana` is unused, so both national dates coincide today (known open delta).
+  const nationalCivil = computeNationalCivilDate(jd, nationalShakaYear, false);
+  const nationalNirayana = computeNationalCivilDate(
+    jd,
+    nationalShakaYear,
+    true,
+  );
 
   // Ayanamsa (Lahiri) at this JD
   const ayanamshaLahiri = ephe.getAyanamsaUt(jd);
@@ -144,8 +236,11 @@ export function computeCalendars(
     shakaYear,
     vikramYear,
     gujaratiYear,
-    nationalCivilDate: { ...nationalCivil, shakaYear },
-    nationalNirayanaDate: { ...nationalNirayana, shakaYear },
+    nationalCivilDate: { ...nationalCivil, shakaYear: nationalShakaYear },
+    nationalNirayanaDate: {
+      ...nationalNirayana,
+      shakaYear: nationalShakaYear,
+    },
     samvatsaraShaka,
     samvatsaraVikram,
     samvatsaraShakaSuffix,
@@ -173,7 +268,7 @@ function getNirayanaSolarMonth(sunSignIdx: number): string {
     "Ashadha",
     "Shravana",
     "Bhadrapada",
-    "Ashwin",
+    "Ashwina",
     "Kartika",
     "Margashirsha",
     "Pausha",
@@ -291,6 +386,7 @@ export function computeTamilCalendar(
   tamilMonths: Record<number, { en: string; ta: string }>,
   samvatsaraNames: string[],
   samvatsaraTaNames: string[],
+  shakaYearOverride?: number,
 ): import("../types").TamilCalendar {
   const [gregYear] = ephe.revjul(jd);
   const tamilMonth = tamilMonths[sunSignId];
@@ -298,8 +394,9 @@ export function computeTamilCalendar(
 
   // Tamil year = (greg_year - 57) → Thiruvalluvar era (rough approximation)
   // Actually: Tamil year index is Shaka + (samvatsara offset)
-  // We use Shaka-based samvatsara for Tamil as well
-  const shakaYear = gregYear - 78;
+  // We use the corrected lunar Shaka year (passed from computeCalendars) when available,
+  // falling back to the solar approximation for standalone calls.
+  const shakaYear = shakaYearOverride ?? gregYear - 78;
   const samvIdx = (shakaYear + 11) % 60;
 
   const EN_DAYS = [

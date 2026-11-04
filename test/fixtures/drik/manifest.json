@@ -1,0 +1,54 @@
+{
+  "capturedAt": "2026-10-16T21:22:32.110Z",
+  "source": "https://www.drikpanchang.com/panchang/day-panchang.html",
+  "locations": [
+    {
+      "slug": "new-delhi",
+      "geonameId": 1261481,
+      "name": "New Delhi",
+      "timezone": "Asia/Kolkata",
+      "latitude": 28.6139,
+      "longitude": 77.209
+    },
+    {
+      "slug": "chennai",
+      "geonameId": 1264527,
+      "name": "Chennai",
+      "timezone": "Asia/Kolkata",
+      "latitude": 13.0827,
+      "longitude": 80.2707
+    },
+    {
+      "slug": "london",
+      "geonameId": 2643743,
+      "name": "London",
+      "timezone": "Europe/London",
+      "latitude": 51.5074,
+      "longitude": -0.1278
+    },
+    {
+      "slug": "kelowna",
+      "geonameId": 5990579,
+      "name": "Kelowna",
+      "timezone": "America/Vancouver",
+      "latitude": 49.888,
+      "longitude": -119.496
+    },
+    {
+      "slug": "suwanee-ga",
+      "geonameId": 4225309,
+      "name": "Suwanee",
+      "timezone": "America/New_York",
+      "latitude": 34.0514,
+      "longitude": -84.0711
+    }
+  ],
+  "dates": [
+    "2026-01-15",
+    "2026-03-18",
+    "2026-03-19",
+    "2026-04-14",
+    "2026-10-16",
+    "2026-11-09"
+  ]
+}

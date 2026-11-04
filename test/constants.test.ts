@@ -14,7 +14,7 @@ import {
   EXALTATION, DEBILITATION, OWN_SIGNS, MOOLATRIKONA,
 } from '../src/constants/planets';
 import {
-  VARJYAM_GHATIKAS, VARJYAM_DURATION_GHATIKAS, AMRIT_OFFSET_GHATIKAS,
+  VARJYAM_GHATIKAS, VARJYAM_DURATION_GHATIKAS, AMRIT_GHATIKAS,
   SARVARTHA_SIDDHI, AMRITA_SIDDHI, DUR_MUHURTA, ABHIJIT_MUHURTA_INDEX,
   GOWRI_DAY_START, HORA_DAY_START, HORA_CYCLE, AUSPICIOUS_HORAS,
   AMRITADI_TABLE, NAKSHATRA_TYAJYAM_RATIO, TITHI_TYAJYAM_BASE,
@@ -80,11 +80,11 @@ describe('Rahu Kalam / Yamaganda / Gulika segments', () => {
 });
 
 describe('karanaName()', () => {
-  it('index 0 = Kimstughna (fixed)', () => {
-    expect(karanaName(0)).toBe('Kimstughna');
+  it('index 0 = Kinstughna (fixed)', () => {
+    expect(karanaName(0)).toBe('Kinstughna');
   });
   it('indices 1-7 cycle through 7 movable karanas', () => {
-    const expected = ['Bava', 'Balava', 'Kaulava', 'Taitila', 'Gara', 'Vanija', 'Vishti'];
+    const expected = ['Bava', 'Balava', 'Kaulava', 'Taitila', 'Garaja', 'Vanija', 'Vishti'];
     for (let i = 0; i < 7; i++) {
       expect(karanaName(i + 1)).toBe(expected[i]);
     }
@@ -95,7 +95,7 @@ describe('karanaName()', () => {
   it('fixed karanas 57-59', () => {
     expect(karanaName(57)).toBe('Shakuni');
     expect(karanaName(58)).toBe('Chatushpada');
-    expect(karanaName(59)).toBe('Naga');
+    expect(karanaName(59)).toBe('Nagava');
   });
   it('last movable index (56) = Vishti', () => {
     expect(karanaName(56)).toBe('Vishti');
@@ -333,11 +333,11 @@ describe('Varjyam constants', () => {
       expect(v).toBeLessThanOrEqual(60);
     }
   });
-  it('VARJYAM_DURATION_GHATIKAS = 1.6', () => {
-    expect(VARJYAM_DURATION_GHATIKAS).toBe(1.6);
+  it('VARJYAM_DURATION_GHATIKAS = 4 (nakshatra-span/15)', () => {
+    expect(VARJYAM_DURATION_GHATIKAS).toBe(4);
   });
-  it('AMRIT_OFFSET_GHATIKAS = 26.67', () => {
-    expect(AMRIT_OFFSET_GHATIKAS).toBeCloseTo(26.67, 2);
+  it('AMRIT_GHATIKAS has 27 entries (one per nakshatra)', () => {
+    expect(AMRIT_GHATIKAS).toHaveLength(27);
   });
 });
 
@@ -366,6 +366,15 @@ describe('DUR_MUHURTA', () => {
   });
   it('Saturday has 2 bad muhurtas', () => {
     expect(DUR_MUHURTA[6].length).toBe(2);
+  });
+  it('Tuesday has 2 bad muhurtas (day 4, night 22)', () => {
+    expect(DUR_MUHURTA[2]).toEqual([4, 22]);
+  });
+  it('Thursday has 2 bad muhurtas (6 and 12)', () => {
+    expect(DUR_MUHURTA[4]).toEqual([6, 12]);
+  });
+  it('Friday has 2 bad muhurtas (4 and 9)', () => {
+    expect(DUR_MUHURTA[5]).toEqual([4, 9]);
   });
   it('ABHIJIT_MUHURTA_INDEX = 8', () => {
     expect(ABHIJIT_MUHURTA_INDEX).toBe(8);
@@ -440,10 +449,10 @@ describe('Tyajyam ratio tables', () => {
   it('Monday VARA_TYAJYAM offset = 42 nazhigai', () => {
     expect(VARA_TYAJYAM_NAZHIGAI[1]).toBe(42);
   });
-  it('INAUSPICIOUS_KARANAS includes Vishti, Chatushpada, Naga', () => {
+  it('INAUSPICIOUS_KARANAS includes Vishti, Chatushpada, Nagava', () => {
     expect(INAUSPICIOUS_KARANAS.has('Vishti')).toBe(true);
     expect(INAUSPICIOUS_KARANAS.has('Chatushpada')).toBe(true);
-    expect(INAUSPICIOUS_KARANAS.has('Naga')).toBe(true);
+    expect(INAUSPICIOUS_KARANAS.has('Nagava')).toBe(true);
     expect(INAUSPICIOUS_KARANAS.size).toBe(3);
   });
 });

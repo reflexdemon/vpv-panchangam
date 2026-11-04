@@ -166,7 +166,7 @@ describe('amritadi_yogam', () => {
 // ─── Karana Tyajyam ──────────────────────────────────────────────────────────
 
 describe('karana_tyajyam', () => {
-  it('returns only inauspicious karanas (Vishti, Chatushpada, Naga)', () => {
+  it('returns only inauspicious karanas (Vishti, Chatushpada, Nagava)', () => {
     const karanas = [
       { index: 6, name: 'Vishti',     starts_at: 'A', ends_at: 'B' },
       { index: 0, name: 'Bava',       starts_at: 'C', ends_at: 'D' },
@@ -183,9 +183,9 @@ describe('karana_tyajyam', () => {
   });
 
   it('karana field is set from name', () => {
-    const karanas = [{ index: 59, name: 'Naga', starts_at: 'A', ends_at: 'B' }];
+    const karanas = [{ index: 59, name: 'Nagava', starts_at: 'A', ends_at: 'B' }];
     const result = karana_tyajyam(karanas);
-    expect(result[0].karana).toBe('Naga');
+    expect(result[0].karana).toBe('Nagava');
   });
 });
 

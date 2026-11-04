@@ -23,6 +23,7 @@ import {
   generateMoonSigns,
   generateNakshatraPadas,
 } from "../calculations/panchang";
+import { findAngleTime } from "../calculations/bisection";
 import { karanaName } from "../constants/panchang";
 import {
   computeSolarTimes,
@@ -43,11 +44,13 @@ import {
   sayahnaSandhya,
   nishitaMuhurta,
   varjyamWindow,
+  varjyamWindow2,
   amritKalamWindow,
   sarvarthaSiddhiYoga,
   amritaSiddhiYoga,
   bhadraWindows,
 } from "../calculations/muhurta";
+import { VARJYAM_GHATIKAS_2 } from "../constants/muhurta";
 import { computeGowri } from "../calculations/gowri";
 import { computeHora } from "../calculations/hora";
 import { computeNallaNeram } from "../calculations/nalla-neram";
@@ -161,6 +164,11 @@ export async function computeDetailedPanchang(
     const sunsetJd = solarTimes.sunset ?? jdNoon + 0.25;
     const nextSunriseJd = solarTimes.nextSunrise ?? sunriseJd + 1;
 
+    // Previous day's sunset — needed for brahma muhurta and godhuli muhurta
+    // (both are anchored to the night that ends at today's sunrise).
+    const prevSolarTimes = computeSolarTimes(jdNoon - 1, lat, lon, ephe);
+    const prevSunsetJd = prevSolarTimes.sunset ?? sunsetJd - 1;
+
     const sunriseIso =
       solarTimes.sunrise != null ? jdToIso(sunriseJd, ephe) : null;
     const sunsetIso =
@@ -259,11 +267,11 @@ export async function computeDetailedPanchang(
     );
 
     // ── Paksha ───────────────────────────────────────────────────────────────
-    const tIdx = tithiIndex(sunLon, moonLon);
+    const tIdx = tithiNow?.index ?? tithiIndex(sunLon, moonLon);
     const paksha = tIdx <= 15 ? "Shukla Paksha" : "Krishna Paksha";
 
     // ── Muhurta windows ───────────────────────────────────────────────────────
-    const brahma = brahmaMuhurta(sunriseJd, nextSunriseJd, ephe);
+    const brahma = brahmaMuhurta(prevSunsetJd, sunriseJd, ephe);
     const pratah = pratahSandhya(sunriseJd, sunsetJd, nextSunriseJd, ephe);
     const abhijit = abhijitMuhurta(
       sunriseJd,
@@ -273,28 +281,93 @@ export async function computeDetailedPanchang(
       ephe,
     );
     const vijay = vijayMuhurta(sunriseJd, sunsetJd, nextSunriseJd, ephe);
-    const godhuli = godhuliMuhurta(sunsetJd, ephe);
+    const godhuli = godhuliMuhurta(sunsetJd, prevSunsetJd, sunriseJd, ephe);
     const sayahna = sayahnaSandhya(sunriseJd, sunsetJd, nextSunriseJd, ephe);
     const nishita = nishitaMuhurta(sunriseJd, sunsetJd, nextSunriseJd, ephe);
 
-    // Varjyam + Amrit from current nakshatra
+    // Varjyam + Amrit from nakshatra sequence.
+    //
+    // For the first nakshatra in the sequence, `starts_at` is set to `winStart`
+    // (sunrise) by the generator, not the true nakshatra start. We find the true
+    // start by bisecting backwards so the offset table anchors correctly.
     const varjyamWins: import("../types").TimeWindow[] = [];
     const amritWins: import("../types").TimeWindow[] = [];
-    for (const nak of nakSeq) {
-      const w = varjyamWindow(
-        nak.index,
-        new Date(nak.starts_at ?? nak.ends_at).getTime() / 86400000 + 2440587.5,
-        new Date(nak.ends_at).getTime() / 86400000 + 2440587.5,
-        ephe,
-      );
-      if (w) varjyamWins.push(w);
-      const a = amritKalamWindow(
-        nak.index,
-        new Date(nak.starts_at ?? nak.ends_at).getTime() / 86400000 + 2440587.5,
-        new Date(nak.ends_at).getTime() / 86400000 + 2440587.5,
-        ephe,
-      );
-      if (a) amritWins.push(a);
+
+    // Day boundary for membership filter: a window belongs to this day if its
+    // START falls within [sunriseJd, nextSunriseJd). Windows that begin before
+    // sunrise are excluded even if they overlap it — drik's behaviour.
+    const inDay = (w: { start: string; end: string }): boolean => {
+      const ws = new Date(w.start).getTime();
+      const sunriseMs = (sunriseJd - 2440587.5) * 86400000;
+      const nextSunriseMs = (nextSunriseJd - 2440587.5) * 86400000;
+      return ws >= sunriseMs && ws < nextSunriseMs;
+    };
+
+    for (let ni = 0; ni < nakSeq.length; ni++) {
+      const nak = nakSeq[ni]!;
+      const isFirst = ni === 0;
+      const isLast = ni === nakSeq.length - 1;
+
+      // Find true nakshatra start.
+      // For the first entry, starts_at == winStart (sunrise) — not the real start.
+      // Bisect backwards up to 1.5 days from nak_end to find the true start.
+      let nakStartJd: number;
+      if (isFirst) {
+        const nakEndJd0 =
+          new Date(nak.ends_at).getTime() / 86400000 + 2440587.5;
+        const targetLon = (nak.index * NAK_SPAN + 360) % 360;
+        const found = findAngleTime(
+          nakEndJd0 - 1.5,
+          nakEndJd0 - 0.01,
+          targetLon,
+          (jd) => {
+            const lon = ephe.calcUt(
+              jd,
+              SE.MOON,
+              SE.FLG_SWIEPH | SE.FLG_SPEED | SE.FLG_SIDEREAL,
+            ).lon;
+            return ((lon % 360) + 360) % 360;
+          },
+        );
+        nakStartJd = found ?? nakEndJd0 - 1;
+      } else {
+        nakStartJd =
+          new Date(nak.starts_at ?? nak.ends_at).getTime() / 86400000 +
+          2440587.5;
+      }
+
+      // Find true nakshatra end.
+      // For the last entry, ends_at == winEnd (next sunrise) — not the real end.
+      // Bisect forward up to 1.5 days from nak_start to find the true end.
+      let nakEndJd: number;
+      if (isLast) {
+        const nextNakTargetLon = ((nak.index + 1) % 27) * NAK_SPAN;
+        const lo = nakStartJd + 0.01;
+        const hi = nakStartJd + 1.5;
+        const found = findAngleTime(lo, hi, nextNakTargetLon, (jd) => {
+          const lon = ephe.calcUt(
+            jd,
+            SE.MOON,
+            SE.FLG_SWIEPH | SE.FLG_SPEED | SE.FLG_SIDEREAL,
+          ).lon;
+          return ((lon % 360) + 360) % 360;
+        });
+        nakEndJd = found ?? nakStartJd + 1;
+      } else {
+        nakEndJd =
+          new Date(nak.ends_at).getTime() / 86400000 + 2440587.5;
+      }
+
+      const w = varjyamWindow(nak.index, nakStartJd, nakEndJd, ephe);
+      if (w && inDay(w)) varjyamWins.push(w);
+      // Second varjyam window for nakshatras that have one (e.g. Mula)
+      const gh2 = VARJYAM_GHATIKAS_2[nak.index];
+      if (gh2 != null) {
+        const w2 = varjyamWindow2(gh2, nak.index, nakStartJd, nakEndJd, ephe);
+        if (w2 && inDay(w2)) varjyamWins.push(w2);
+      }
+      const a = amritKalamWindow(nak.index, nakStartJd, nakEndJd, ephe);
+      if (a && inDay(a)) amritWins.push(a);
     }
 
     // Siddhi Yogas
@@ -382,6 +455,7 @@ export async function computeDetailedPanchang(
         TAMIL_MONTHS_BY_SIGN,
         table.samvatsaras,
         table.samvatsaras,
+        calInfo.shakaYear,
       );
     } catch {
       /* non-critical */
@@ -524,12 +598,12 @@ export async function computeDetailedPanchang(
         national_civil_date: {
           month: calInfo.nationalCivilDate.month,
           day: calInfo.nationalCivilDate.day,
-          shaka_year: calInfo.shakaYear,
+          shaka_year: calInfo.nationalCivilDate.shakaYear,
         },
         national_nirayana_date: {
           month: calInfo.nationalNirayanaDate.month,
           day: calInfo.nationalNirayanaDate.day,
-          shaka_year: calInfo.shakaYear,
+          shaka_year: calInfo.nationalNirayanaDate.shakaYear,
         },
       },
     };

@@ -269,7 +269,28 @@ npm test             # Run Vitest test suite
 npm run lint         # ESLint
 npm run format       # Prettier
 npm run test:watch   # Watch mode
+npm run test:drik    # Run offline Drik parity test harness
 ```
+
+### DrikPanchang Parity
+
+The panchang calculations reproduce DrikPanchang conventions as the library default, verified offline against committed reference fixtures.
+
+**What is DrikPanchang-compatible:** calendar eras (Shaka/Vikram/Gujarati samvat + samvatsara names), amanta and purnimanta lunar month (derived from the last new moon), Kaliyuga year, paksha (from sunrise tithi), vara and karana spellings, all five muhurta/sandhya windows (Brahma, Pratah Sandhya, Vijaya, Godhuli, Sayahna Sandhya), varjyam and amrit kalam, dur muhurtam.
+
+**Fixture capture workflow** (run once, not during `npm test`):
+```bash
+node scripts/capture-drik-fixtures.mjs   # ~90 s, requires internet
+```
+Captured fixtures are committed as JSON under `test/fixtures/drik/`. The parity test suite runs offline against those files:
+```bash
+npm run test:drik    # DRIK_PARITY=1 npx vitest run test/drik-parity.test.ts
+```
+
+**Moonrise/moonset:** The library evaluates moonrise and moonset within the panchang day `[sunrise, nextSunrise)` with the Moon's topocentric center at the geometric horizon (`alt0 = 0°`), matching DrikPanchang convention within 1 minute across all fixtures.
+
+> **Note on Kelowna, BC (2026-11-09):** On 2026-11-09, drikpanchang.com rendered wall-clock times for Kelowna in PDT (UTC−7) even though Daylight Saving Time in British Columbia ended on 2026-11-01 (PST, UTC−8). The library's astronomical UTC instants are correct.
+
 
 ## License
 

@@ -73,13 +73,21 @@ export const CHANDRA_MASA_BY_SUNSIGN = [
   "Ashadha",
   "Shravana",
   "Bhadrapada",
-  "Ashwin",
+  "Ashwina",
   "Kartika",
   "Margashirsha",
   "Pausha",
   "Magha",
   "Phalguna",
   "Chaitra",
+];
+
+// Amanta lunar months ordered Chaitra..Phalguna (index 0 = Chaitra). Derived
+// from CHANDRA_MASA_BY_SUNSIGN so the existing string spellings ("Ashwina") are
+// preserved. Index = Sun's sidereal sign at the new moon, mod 12 (Meena → Chaitra).
+export const AMANTA_MONTHS = [
+  CHANDRA_MASA_BY_SUNSIGN[11], // Chaitra (Sun in Meena at the new moon)
+  ...CHANDRA_MASA_BY_SUNSIGN.slice(0, 11), // Vaishakha .. Phalguna
 ];
 
 // Sign → Drik Ritu (tropical-based)
@@ -142,10 +150,10 @@ export const NATIONAL_CIVIL_MONTHS = [
   { name: "Asadha", days: 31 },
   { name: "Sravana", days: 31 },
   { name: "Bhadra", days: 31 },
-  { name: "Asvina", days: 30 },
+  { name: "Ashwina", days: 30 },
   { name: "Kartika", days: 30 },
   { name: "Agrahayana", days: 30 },
-  { name: "Pausa", days: 30 },
+  { name: "Pausha", days: 30 },
   { name: "Magha", days: 30 },
   { name: "Phalguna", days: 30 },
 ];
