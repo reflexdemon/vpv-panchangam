@@ -12,16 +12,41 @@ export const VARJYAM_DURATION_GHATIKAS = 4; // = nakshatra-span/15 (span modelle
 // Currently only Mula (idx=18) is known to have a second at offset 20 gh (the primary
 // one listed by drik; offset 56 is the secondary that ends at nak-end).
 export const VARJYAM_GHATIKAS_2: (number | null)[] = [
-  null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-  null, null, null, null, 20,   null, null, null, null, null, null, null, null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  20,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
 ];
 
 // Amrit Kalam starting ghatika (out of 60) per nakshatra index 0-26 (Ashwini=0).
 // Fitted from drik fixtures: for all sampled nakshatras except Mula (idx=18)
 // the offset is (VARJYAM_GHATIKAS[i] + 24) % 60; Mula is set empirically to 44.
 export const AMRIT_GHATIKAS = [
-  14, 48, 54,  4, 38, 45, 54, 44, 56, 54, 44, 42, 45, 44, 38, 38, 34, 38, 44,
-  48, 44, 34, 34, 42, 40, 48, 54,
+  14, 48, 54, 4, 38, 45, 54, 44, 56, 54, 44, 42, 45, 44, 38, 38, 34, 38, 44, 48,
+  44, 34, 34, 42, 40, 48, 54,
 ];
 export const AMRIT_KALAM_DURATION_GHATIKAS = 4; // = nakshatra-span/15
 

@@ -150,7 +150,7 @@ mismatches:
 
 - Cross-midnight window membership (varjyam, amrit kalam, dur_muhurtam,
   nishita arrays on a civil-date response): a window appears in the day's
-  array iff it intersects [sunrise, next sunrise) — matching what drik's
+  array iff its start falls in [sunrise, next sunrise) — matching what drik's
   day-panchang page displays, including windows labeled ", Oct 17".
   Fixture tests enforce this membership.
 - Internal consistency of dependents: `computeTamilCalendar` (which hardcodes

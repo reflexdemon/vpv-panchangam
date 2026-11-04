@@ -13,22 +13,40 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { computeDetailedPanchang } from "../src/index";
 import type { PanchangResponse } from "../src/index";
-import {
-  loadFixtures,
-  parseWindow,
-  minuteDelta,
-} from "./drik-helpers";
+import { loadFixtures, parseWindow, minuteDelta } from "./drik-helpers";
 import type { DrikFixture } from "./drik-helpers";
 
 // ── constants from source ────────────────────────────────────────────────────
 import { VARJYAM_GHATIKAS, VARJYAM_GHATIKAS_2 } from "../src/constants/muhurta";
 
 const NAK_NAMES = [
-  "Ashwini","Bharani","Krittika","Rohini","Mrigashira","Ardra","Punarvasu",
-  "Pushya","Ashlesha","Magha","Purva Phalguni","Uttara Phalguni","Hasta",
-  "Chitra","Swati","Vishakha","Anuradha","Jyeshtha","Mula","Purva Ashadha",
-  "Uttara Ashadha","Shravana","Dhanishta","Shatabhisha","Purva Bhadrapada",
-  "Uttara Bhadrapada","Revati",
+  "Ashwini",
+  "Bharani",
+  "Krittika",
+  "Rohini",
+  "Mrigashira",
+  "Ardra",
+  "Punarvasu",
+  "Pushya",
+  "Ashlesha",
+  "Magha",
+  "Purva Phalguni",
+  "Uttara Phalguni",
+  "Hasta",
+  "Chitra",
+  "Swati",
+  "Vishakha",
+  "Anuradha",
+  "Jyeshtha",
+  "Mula",
+  "Purva Ashadha",
+  "Uttara Ashadha",
+  "Shravana",
+  "Dhanishta",
+  "Shatabhisha",
+  "Purva Bhadrapada",
+  "Uttara Bhadrapada",
+  "Revati",
 ] as const;
 
 function utcMin(iso: string): number {
@@ -39,9 +57,9 @@ function utcMin(iso: string): number {
 /** Offset in ghatikas from nak_start to window_start (wrapping 0-60). */
 function offsetGh(nakStartMs: number, winStartMs: number): number {
   let diffMs = winStartMs - nakStartMs;
-  const nakSpanMs = 24 * 60 * 60 * 1000;  // ~1 day (approximation)
+  const nakSpanMs = 24 * 60 * 60 * 1000; // ~1 day (approximation)
   if (diffMs < 0) diffMs += nakSpanMs;
-  return (diffMs / 60000) / 24;  // minutes → ghatikas (1 gh = 24 min)
+  return diffMs / 60000 / 24; // minutes → ghatikas (1 gh = 24 min)
 }
 
 const fixtures = loadFixtures();
@@ -62,7 +80,11 @@ describe("varjyam/amrit offset fitting", () => {
   beforeAll(async () => {
     for (const f of fixtures) {
       const r = await computeDetailedPanchang(
-        f.date, f.latitude, f.longitude, f.timezone, "en"
+        f.date,
+        f.latitude,
+        f.longitude,
+        f.timezone,
+        "en",
       );
       results.set(`${f.slug}|${f.date}`, r);
     }
@@ -95,7 +117,13 @@ describe("varjyam/amrit offset fitting", () => {
 
       // Initialize collector
       if (!nakSummary[nakName]) {
-        nakSummary[nakName] = { idx: nakIdx, varjyamOffsets: [], amritOffsets: [], varjyamDurations: [], amritDurations: [] };
+        nakSummary[nakName] = {
+          idx: nakIdx,
+          varjyamOffsets: [],
+          amritOffsets: [],
+          varjyamDurations: [],
+          amritDurations: [],
+        };
       }
 
       // Fixture windows
@@ -114,7 +142,7 @@ describe("varjyam/amrit offset fitting", () => {
         // wrap within nak span (window may start in next day's nak span)
         if (diffMs < -6 * 60 * 60000) diffMs += 24 * 60 * 60000;
         if (diffMs > 30 * 60 * 60000) diffMs -= 24 * 60 * 60000;
-        const offGh = (diffMs / 60000) / 24;
+        const offGh = diffMs / 60000 / 24;
         // Only record if plausibly within 0-60 gh
         if (offGh >= 0 && offGh <= 60) {
           nakSummary[nakName]!.varjyamOffsets.push(offGh);
@@ -132,7 +160,7 @@ describe("varjyam/amrit offset fitting", () => {
         let diffMs = winStartMs - nakStartMs;
         if (diffMs < -6 * 60 * 60000) diffMs += 24 * 60 * 60000;
         if (diffMs > 30 * 60 * 60000) diffMs -= 24 * 60 * 60000;
-        const offGh = (diffMs / 60000) / 24;
+        const offGh = diffMs / 60000 / 24;
         if (offGh >= 0 && offGh <= 60) {
           nakSummary[nakName]!.amritOffsets.push(offGh);
           nakSummary[nakName]!.amritDurations.push(durMin / 24);
@@ -144,21 +172,29 @@ describe("varjyam/amrit offset fitting", () => {
     console.log("\n=== Observed offsets (gh from nak_start) ===");
     const pad = (s: string, n: number) => s.padEnd(n).slice(0, n);
     const padL = (s: string, n: number) => s.padStart(n).slice(-n);
-    console.log(pad("Nakshatra",26) + padL("idx",4) + padL("VARJ_GH",8) + "  obs_varj               obs_amrit              dur_v  dur_a");
+    console.log(
+      pad("Nakshatra", 26) +
+        padL("idx", 4) +
+        padL("VARJ_GH", 8) +
+        "  obs_varj               obs_amrit              dur_v  dur_a",
+    );
     for (const nakName of NAK_NAMES) {
       const nd = nakSummary[nakName];
       if (!nd) continue;
       const tableVarj = VARJYAM_GHATIKAS[nd.idx];
       const avgDv = nd.varjyamDurations.length
-        ? nd.varjyamDurations.reduce((a,b)=>a+b)/nd.varjyamDurations.length : NaN;
+        ? nd.varjyamDurations.reduce((a, b) => a + b) /
+          nd.varjyamDurations.length
+        : NaN;
       const avgDa = nd.amritDurations.length
-        ? nd.amritDurations.reduce((a,b)=>a+b)/nd.amritDurations.length : NaN;
-      const vStr = nd.varjyamOffsets.map(x=>x.toFixed(1)).join(",");
-      const aStr = nd.amritOffsets.map(x=>x.toFixed(1)).join(",");
+        ? nd.amritDurations.reduce((a, b) => a + b) / nd.amritDurations.length
+        : NaN;
+      const vStr = nd.varjyamOffsets.map((x) => x.toFixed(1)).join(",");
+      const aStr = nd.amritOffsets.map((x) => x.toFixed(1)).join(",");
       const dvStr = isNaN(avgDv) ? "-" : avgDv.toFixed(1);
       const daStr = isNaN(avgDa) ? "-" : avgDa.toFixed(1);
       console.log(
-        `${pad(nakName,26)} ${padL(String(nd.idx),3)} ${padL(String(tableVarj ?? "?"),7)}  ${pad(vStr||"—",22)}  ${pad(aStr||"—",22)}  ${padL(dvStr,5)}  ${padL(daStr,5)}`
+        `${pad(nakName, 26)} ${padL(String(nd.idx), 3)} ${padL(String(tableVarj ?? "?"), 7)}  ${pad(vStr || "—", 22)}  ${pad(aStr || "—", 22)}  ${padL(dvStr, 5)}  ${padL(daStr, 5)}`,
       );
     }
 
@@ -167,8 +203,8 @@ describe("varjyam/amrit offset fitting", () => {
   });
 
   it("collects all expected nakshatras and prints summary table", () => {
-    // The main value of this test is the console output above. 
-    // For each sampled nak the offsets should cluster near the VARJYAM_GHATIKAS 
+    // The main value of this test is the console output above.
+    // For each sampled nak the offsets should cluster near the VARJYAM_GHATIKAS
     // value (or secondary); edge cases from short truncated nak windows are expected.
     expect(Object.keys(nakSummary).length).toBeGreaterThan(0);
   });

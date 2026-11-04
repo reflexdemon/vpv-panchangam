@@ -44,20 +44,13 @@
     "vijayaMuhurta": "01:53 PM to 02:40 PM",
     "godhuli": "05:49 PM to 06:14 PM",
     "sayahnaSandhya": "05:49 PM to 07:02 PM",
-    "amritKalam": [
-      "02:35 AM , Oct 17 to 04:23 AM , Oct 17"
-    ],
+    "amritKalam": ["02:35 AM , Oct 17 to 04:23 AM , Oct 17"],
     "nishita": "11:30 PM to 12:19 AM , Oct 17",
     "rahuKalam": "10:26 AM to 11:54 AM",
     "yamaganda": "02:52 PM to 04:21 PM",
     "gulikai": "07:28 AM to 08:57 AM",
-    "varjyam": [
-      "03:47 PM to 05:35 PM"
-    ],
-    "durMuhurtam": [
-      "08:21 AM to 09:09 AM",
-      "12:18 PM to 01:05 PM"
-    ]
+    "varjyam": ["03:47 PM to 05:35 PM"],
+    "durMuhurtam": ["08:21 AM to 09:09 AM", "12:18 PM to 01:05 PM"]
   },
   "raw": {
     "Sunrise": "05:59 AM",

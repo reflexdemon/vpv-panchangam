@@ -1,6 +1,6 @@
 # Vedic Panchanga JS Library — Implementation Plan
 
-> **Status (2026-10):** Initial library port and modules (Tasks 1–18, 20) are **COMPLETED** (published as `vpv-panchangam`). Runtime was subsequently migrated to `@swisseph/browser` WASM. Ongoing DrikPanchang parity fixes are tracked in [2026-10-16-drik-parity.md](file:///Users/reflex/dev/gh/vpv-panchangam/docs/superpowers/plans/2026-10-16-drik-parity.md).
+> **Status (2026-10):** Initial library port and modules (Tasks 1–18, 20) are **COMPLETED** (published as `vpv-panchangam`). Runtime was subsequently migrated to `@swisseph/browser` WASM. Ongoing DrikPanchang parity fixes are tracked in [2026-10-16-drik-parity.md](superpowers/plans/2026-10-16-drik-parity.md).
 
 **Goal:** Port the Vedic Panchanga Python backend (vedicpanchanga.com) to a TypeScript npm package with full Drik Panchang + Kundali calculator.
 

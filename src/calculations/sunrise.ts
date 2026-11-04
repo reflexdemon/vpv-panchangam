@@ -62,7 +62,7 @@ export function computeSolarTimes(
       : null;
 
   const searchStart = sunrise ?? jdMidnight;
-  const searchEnd = nextSunrise ?? (searchStart + 1);
+  const searchEnd = nextSunrise ?? searchStart + 1;
 
   // DrikPanchang convention for Moonrise/Moonset:
   // Evaluated within the panchang day [sunrise, nextSunrise), with topocentric

@@ -116,7 +116,8 @@ describe("drik parity (offline replay of committed fixtures)", () => {
     describe(`${f.slug} ${f.date}`, () => {
       let result: PanchangResponse;
       const tz = (f.page as any).displayTimezone ?? f.timezone;
-      const displayOffsetMin: number | null = (f.page as any).drikUtcOffsetMinutes ?? null;
+      const displayOffsetMin: number | null =
+        (f.page as any).drikUtcOffsetMinutes ?? null;
       const page = f.page;
 
       beforeAll(async () => {
@@ -157,8 +158,18 @@ describe("drik parity (offline replay of committed fixtures)", () => {
       });
 
       it("tolerant: sunrise/sunset", () => {
-        expectHm(result.sun_moon.sunrise, page.sunrise as string, tz, displayOffsetMin);
-        expectHm(result.sun_moon.sunset, page.sunset as string, tz, displayOffsetMin);
+        expectHm(
+          result.sun_moon.sunrise,
+          page.sunrise as string,
+          tz,
+          displayOffsetMin,
+        );
+        expectHm(
+          result.sun_moon.sunset,
+          page.sunset as string,
+          tz,
+          displayOffsetMin,
+        );
       });
 
       // moonrise/moonset is a known-drift best-effort area (lunar visibility
@@ -169,12 +180,22 @@ describe("drik parity (offline replay of committed fixtures)", () => {
           if (page.moonrise == null) {
             expect(result.sun_moon.moonrise).toBeNull();
           } else {
-            expectHm(result.sun_moon.moonrise, page.moonrise, tz, displayOffsetMin);
+            expectHm(
+              result.sun_moon.moonrise,
+              page.moonrise,
+              tz,
+              displayOffsetMin,
+            );
           }
           if (page.moonset == null) {
             expect(result.sun_moon.moonset).toBeNull();
           } else {
-            expectHm(result.sun_moon.moonset, page.moonset, tz, displayOffsetMin);
+            expectHm(
+              result.sun_moon.moonset,
+              page.moonset,
+              tz,
+              displayOffsetMin,
+            );
           }
         });
       });
@@ -202,16 +223,21 @@ describe("drik parity (offline replay of committed fixtures)", () => {
           //  (b) godhuli duration equals the fixture duration within TOL_MIN.
           if (w.fixtureKey === "godhuli") {
             expect(
-              minuteDelta(localHm(actual!.start, tz), localHm(result.sun_moon.sunset!, tz)),
+              minuteDelta(
+                localHm(actual!.start, tz),
+                localHm(result.sun_moon.sunset!, tz),
+              ),
               `godhuli start should equal our computed sunset`,
             ).toBeLessThanOrEqual(TOL_MIN);
             // Duration check: compare the fixture window length to ours.
-            const {
-              startUtc: expStart,
-              endUtc: expEnd,
-            } = parseWindow(raw as string, tz, f.date);
+            const { startUtc: expStart, endUtc: expEnd } = parseWindow(
+              raw as string,
+              tz,
+              f.date,
+            );
             const expDurMin = Math.round(
-              (new Date(expEnd).getTime() - new Date(expStart).getTime()) / 60000,
+              (new Date(expEnd).getTime() - new Date(expStart).getTime()) /
+                60000,
             );
             const actDurMin = Math.round(
               (new Date(actual!.end).getTime() -

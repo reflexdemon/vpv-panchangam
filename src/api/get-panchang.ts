@@ -164,8 +164,8 @@ export async function computeDetailedPanchang(
     const sunsetJd = solarTimes.sunset ?? jdNoon + 0.25;
     const nextSunriseJd = solarTimes.nextSunrise ?? sunriseJd + 1;
 
-    // Previous day's sunset — needed for brahma muhurta and godhuli muhurta
-    // (both are anchored to the night that ends at today's sunrise).
+    // Previous day's sunset — needed for brahma muhurta
+    // (anchored to the night that ends at today's sunrise).
     const prevSolarTimes = computeSolarTimes(jdNoon - 1, lat, lon, ephe);
     const prevSunsetJd = prevSolarTimes.sunset ?? sunsetJd - 1;
 
@@ -267,7 +267,8 @@ export async function computeDetailedPanchang(
     );
 
     // ── Paksha ───────────────────────────────────────────────────────────────
-    const tIdx = tithiNow?.index ?? tithiIndex(sunLon, moonLon);
+    const noonTithiIdx = tithiIndex(sunLon, moonLon);
+    const tIdx = tithiNow?.index ?? noonTithiIdx;
     const paksha = tIdx <= 15 ? "Shukla Paksha" : "Krishna Paksha";
 
     // ── Muhurta windows ───────────────────────────────────────────────────────
@@ -281,7 +282,7 @@ export async function computeDetailedPanchang(
       ephe,
     );
     const vijay = vijayMuhurta(sunriseJd, sunsetJd, nextSunriseJd, ephe);
-    const godhuli = godhuliMuhurta(sunsetJd, prevSunsetJd, sunriseJd, ephe);
+    const godhuli = godhuliMuhurta(sunsetJd, nextSunriseJd, ephe);
     const sayahna = sayahnaSandhya(sunriseJd, sunsetJd, nextSunriseJd, ephe);
     const nishita = nishitaMuhurta(sunriseJd, sunsetJd, nextSunriseJd, ephe);
 
@@ -434,7 +435,7 @@ export async function computeDetailedPanchang(
       jdNoon,
       sunLon,
       moonLon,
-      tIdx,
+      noonTithiIdx,
       sunriseJd,
       ephe,
       table.samvatsaras,
@@ -446,6 +447,7 @@ export async function computeDetailedPanchang(
     // ── Tamil Calendar ────────────────────────────────────────────────────────
     let tamilCal: import("../types").TamilCalendar | null = null;
     try {
+      const taTable = locale === "ta" ? table : getLocaleTable("ta");
       tamilCal = computeTamilCalendar(
         jdNoon,
         sunSignId,
@@ -454,8 +456,7 @@ export async function computeDetailedPanchang(
         ephe,
         TAMIL_MONTHS_BY_SIGN,
         table.samvatsaras,
-        table.samvatsaras,
-        calInfo.shakaYear,
+        taTable.samvatsaras,
       );
     } catch {
       /* non-critical */

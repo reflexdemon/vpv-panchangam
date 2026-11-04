@@ -102,9 +102,14 @@ function sankrantiInMonth(
   );
 }
 
+/** Instant (JD) when Sun enters sidereal Aries (Mesha) in Gregorian `year`. */
+export function meshaSankrantiJd(year: number, ephe: EphemerisService): number {
+  return sankrantiInMonth(year, 4, 1, ephe);
+}
+
 /** Chaitra Shukla Pratipada instant for the Shaka year that begins in Gregorian `year`. */
 export function chaitraShukla1Jd(year: number, ephe: EphemerisService): number {
-  const mesha = sankrantiInMonth(year, 4, 1, ephe); // Sun enters Aries in April
+  const mesha = meshaSankrantiJd(year, ephe); // Sun enters Aries in April
   return lastNewMoonBefore(mesha, ephe);
 }
 
@@ -392,11 +397,17 @@ export function computeTamilCalendar(
   const tamilMonth = tamilMonths[sunSignId];
   const dayInMonth = Math.floor(jd - sunSignStartJd) + 1;
 
-  // Tamil year = (greg_year - 57) → Thiruvalluvar era (rough approximation)
-  // Actually: Tamil year index is Shaka + (samvatsara offset)
-  // We use the corrected lunar Shaka year (passed from computeCalendars) when available,
-  // falling back to the solar approximation for standalone calls.
-  const shakaYear = shakaYearOverride ?? gregYear - 78;
+  // Tamil solar year changes at Mesha sankranti (Sun entering Aries in mid-April, Chithirai 1).
+  // The Tamil 60-year samvatsara cycle follows this solar boundary:
+  // Before Mesha sankranti: gregYear - 79
+  // At/after Mesha sankranti: gregYear - 78
+  let shakaYear: number;
+  if (shakaYearOverride !== undefined) {
+    shakaYear = shakaYearOverride;
+  } else {
+    const meshaJd = meshaSankrantiJd(gregYear, ephe);
+    shakaYear = jd >= meshaJd ? gregYear - 78 : gregYear - 79;
+  }
   const samvIdx = (shakaYear + 11) % 60;
 
   const EN_DAYS = [

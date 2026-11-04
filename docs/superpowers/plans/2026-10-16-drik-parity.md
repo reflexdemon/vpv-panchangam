@@ -12,7 +12,7 @@
 
 ## Background: what is wrong today
 
-Reference comparison for `2026-10-16`, Suwanee GA (34.0514 N, −84.0711 W, `America/New_York`, EDT, Lahiri). Our current values are from `dist/index.js` (run `node /private/var/folders/18/1kxryyzs0hv1lkg16rxwdp8c0000gn/T/opencode/compare.js`).
+Reference comparison for `2026-10-16`, Suwanee GA (34.0514 N, −84.0711 W, `America/New_York`, EDT, Lahiri). Replayable via `npm run test:drik`.
 
 | Field | Ours | Drik | Cause |
 |---|---|---|---|
@@ -612,7 +612,7 @@ const inDay = (w: { start: string; end: string }) =>
 **Files:**
 - (no source change yet)
 
-- [x] `npm run build` then `node /private/var/folders/18/1kxryyzs0hv1lkg16rxwdp8c0000gn/T/opencode/compare.js`.
+- [x] `npm run build` then re-measure against the parity suite (`npm run test:drik`).
 - [x] If `moonrise`/`moonset` are now within 1 min of drik (`13:34`/`22:58` Suwanee EDT), the committed `dist/` was stale — record this in the commit message and skip Task 4.2.
 - [x] Commit (if a rebuild changes `dist/`): `build: rebuild dist so moonrise/moonset include the parallax fix`.
 
