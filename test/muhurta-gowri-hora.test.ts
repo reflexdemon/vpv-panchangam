@@ -260,7 +260,8 @@ describe("varjyamWindow / amritKalamWindow", () => {
     const nakDurMs = (nakEndJd - nakStartJd) * 86400000;
     const aStartMs = new Date(a.start).getTime();
     const nakStartMs = (nakStartJd - 2440587.5) * 86400000;
-    const aOffsetMs = ((aStartMs - nakStartMs) % nakDurMs + nakDurMs) % nakDurMs;
+    const aOffsetMs =
+      (((aStartMs - nakStartMs) % nakDurMs) + nakDurMs) % nakDurMs;
     const aOffsetGh = (aOffsetMs / nakDurMs) * 60;
     expect(aOffsetGh).toBeCloseTo(14, 0); // AMRIT_GHATIKAS[0] = 14
   });

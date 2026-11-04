@@ -144,8 +144,7 @@ function computeTransit(
 ): number | null {
   const [lon, lat] = geopos;
   const defaultAlt0 = body === SE.MOON ? ALT0_MOON : ALT0_SUN;
-  const alt0 =
-    (customAlt0 ?? defaultAlt0) - horizonDip(geopos[2]);
+  const alt0 = (customAlt0 ?? defaultAlt0) - horizonDip(geopos[2]);
   const wantRise = which === SE.CALC_RISE;
   const win = 1.7; // max hours between consecutive rise/set events
   const step = 0.02;

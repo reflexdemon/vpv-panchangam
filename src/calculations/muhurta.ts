@@ -112,17 +112,16 @@ export function vijayMuhurta(
 
 /**
  * Godhuli Muhurta: half a night-muhurta starting at sunset.
- * The muhurta length is derived from the *previous* night
- * (prevSunsetJd → sunriseJd) so that it matches Drik's formula.
+ * The muhurta length is derived from the night beginning at sunset
+ * (sunsetJd → nextSunriseJd).
  */
 export function godhuliMuhurta(
   sunsetJd: number,
-  prevSunsetJd: number,
-  sunriseJd: number,
+  nextSunriseJd: number,
   ephe: EphemerisService,
 ): TimeWindow {
-  const prevNightMuh = (sunriseJd - prevSunsetJd) / 15;
-  return jdToWin(sunsetJd, sunsetJd + prevNightMuh / 2, ephe);
+  const nightMuh = (nextSunriseJd - sunsetJd) / 15;
+  return jdToWin(sunsetJd, sunsetJd + nightMuh / 2, ephe);
 }
 
 /** Sayahna Sandhya: the 1.5 night-muhurtas immediately after sunset. */
