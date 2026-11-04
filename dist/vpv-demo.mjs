@@ -4203,9 +4203,10 @@ function calculateAltitude(swe, t, body, lon, lat) {
   alt -= parallax * Math.cos(alt);
   return alt * (180 / Math.PI);
 }
-function computeTransit(swe, jd, body, geopos, which) {
+function computeTransit(swe, jd, body, geopos, which, customAlt0) {
   const [lon, lat] = geopos;
-  const alt0 = (body === SE.MOON ? ALT0_MOON : ALT0_SUN) - horizonDip(geopos[2]);
+  const defaultAlt0 = body === SE.MOON ? ALT0_MOON : ALT0_SUN;
+  const alt0 = (customAlt0 ?? defaultAlt0) - horizonDip(geopos[2]);
   const wantRise = which === SE.CALC_RISE;
   const win = 1.7;
   const step = 0.02;
@@ -4320,9 +4321,9 @@ var BrowserEphemeris = class {
    * @param which  SE.CALC_RISE or SE.CALC_SET
    * @param geopos [longitude, latitude, altitude_m]
    */
-  riseTrans(jd, body, geopos, which) {
+  riseTrans(jd, body, geopos, which, alt0) {
     try {
-      return computeTransit(this._swe, jd, body, geopos, which);
+      return computeTransit(this._swe, jd, body, geopos, which, alt0);
     } catch {
       return null;
     }
@@ -4428,8 +4429,8 @@ var EphemerisService = class _EphemerisService {
    * @param which  SE.CALC_RISE or SE.CALC_SET
    * @param geopos [longitude, latitude, altitude_m]
    */
-  riseTrans(jd, body, geopos, which) {
-    return this._ephe.riseTrans(jd, body, geopos, which);
+  riseTrans(jd, body, geopos, which, alt0) {
+    return this._ephe.riseTrans(jd, body, geopos, which, alt0);
   }
   /** Get current ayanamsa value (degrees) at a given JD. */
   getAyanamsaUt(jd) {
@@ -4512,6 +4513,7 @@ var locale = {
     "Ekadashi",
     "Dwadashi",
     "Trayodashi",
+    "Chaturdashi",
     "Amavasya"
   ],
   rashis: [
@@ -4576,7 +4578,7 @@ var locale = {
     "Balava",
     "Kaulava",
     "Taitila",
-    "Gara",
+    "Garaja",
     "Vanija",
     "Vishti"
   ],
@@ -4607,13 +4609,13 @@ var locale = {
   ],
   varas: [
     "",
-    "Somavara",
-    "Mangalavara",
-    "Budhavara",
-    "Guruvara",
-    "Shukravara",
-    "Shanivara",
-    "Ravivara"
+    "Somawara",
+    "Mangalawara",
+    "Budhawara",
+    "Guruwara",
+    "Shukrawara",
+    "Shaniwara",
+    "Raviwara"
   ],
   varaEnglish: [
     "",
@@ -4694,7 +4696,7 @@ var locale = {
     "Ashadha",
     "Shravana",
     "Bhadrapada",
-    "Ashwin",
+    "Ashwina",
     "Kartika",
     "Margashirsha",
     "Pausha",
@@ -4808,7 +4810,7 @@ var locale = {
     "Ashadha",
     "Shravana",
     "Bhadrapada",
-    "Ashwin",
+    "Ashwina",
     "Kartika",
     "Margashirsha",
     "Pausha",
@@ -4823,7 +4825,7 @@ var locale = {
     "Ashadha",
     "Shravana",
     "Bhadrapada",
-    "Ashwin",
+    "Ashwina",
     "Kartika",
     "Margashirsha",
     "Pausha",
@@ -4896,6 +4898,7 @@ var locale2 = {
     "\u090F\u0915\u093E\u0926\u0936\u0940",
     "\u0926\u094D\u0935\u093E\u0926\u0936\u0940",
     "\u0924\u094D\u0930\u092F\u094B\u0926\u0936\u0940",
+    "\u091A\u0924\u0941\u0930\u094D\u0926\u0936\u0940",
     "\u0905\u092E\u093E\u0935\u0938\u094D\u092F\u093E"
   ],
   rashis: [
@@ -5272,6 +5275,7 @@ var locale3 = {
     "\u0B8F\u0B95\u0BBE\u0BA4\u0B9A\u0BBF",
     "\u0BA4\u0BC1\u0BB5\u0BBE\u0BA4\u0B9A\u0BBF",
     "\u0BA4\u0BBF\u0BB0\u0BAF\u0BCB\u0BA4\u0B9A\u0BBF",
+    "\u0B9A\u0BA4\u0BC1\u0BB0\u0BCD\u0BA4\u0BCD\u0BA4\u0B9A\u0BBF",
     "\u0B85\u0BAE\u0BBE\u0BB5\u0BBE\u0B9A\u0BC8"
   ],
   rashis: [
@@ -5625,18 +5629,18 @@ var MOVABLE_KARANA_NAMES = [
   "Balava",
   "Kaulava",
   "Taitila",
-  "Gara",
+  "Garaja",
   "Vanija",
   "Vishti"
 ];
 function karanaName(halfIndex) {
-  if (halfIndex === 0) return "Kimstughna";
+  if (halfIndex === 0) return "Kinstughna";
   if (halfIndex >= 1 && halfIndex <= 56) {
     return MOVABLE_KARANA_NAMES[(halfIndex - 1) % 7];
   }
   if (halfIndex === 57) return "Shakuni";
   if (halfIndex === 58) return "Chatushpada";
-  if (halfIndex === 59) return "Naga";
+  if (halfIndex === 59) return "Nagava";
   return "Unknown";
 }
 
@@ -5923,8 +5927,12 @@ function computeSolarTimes(jdNoon, lat, lon, ephe) {
   const sunrise = ephe.riseTrans(jdMidnight, SE.SUN, geopos, SE.CALC_RISE);
   const sunset = sunrise != null ? ephe.riseTrans(sunrise, SE.SUN, geopos, SE.CALC_SET) : null;
   const nextSunrise = sunset != null ? ephe.riseTrans(sunset, SE.SUN, geopos, SE.CALC_RISE) : null;
-  const moonrise = ephe.riseTrans(jdMidnight, SE.MOON, geopos, SE.CALC_RISE);
-  const moonset = moonrise != null ? ephe.riseTrans(moonrise, SE.MOON, geopos, SE.CALC_SET) : null;
+  const searchStart = sunrise ?? jdMidnight;
+  const searchEnd = nextSunrise ?? searchStart + 1;
+  const mr = ephe.riseTrans(searchStart, SE.MOON, geopos, SE.CALC_RISE, 0);
+  const moonrise = mr != null && mr < searchEnd ? mr : null;
+  const ms = ephe.riseTrans(searchStart, SE.MOON, geopos, SE.CALC_SET, 0);
+  const moonset = ms != null && ms < searchEnd ? ms : null;
   return { sunrise, sunset, moonrise, moonset, nextSunrise };
 }
 function computeDaySegments(sunriseJd, sunsetJd, nextSunriseJd) {
@@ -6013,9 +6021,66 @@ var VARJYAM_GHATIKAS = [
   24,
   30
 ];
-var VARJYAM_DURATION_GHATIKAS = 1.6;
-var AMRIT_OFFSET_GHATIKAS = 26.67;
-var AMRIT_KALAM_DURATION_GHATIKAS = 1.6;
+var VARJYAM_DURATION_GHATIKAS = 4;
+var VARJYAM_GHATIKAS_2 = [
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  20,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null
+];
+var AMRIT_GHATIKAS = [
+  14,
+  48,
+  54,
+  4,
+  38,
+  45,
+  54,
+  44,
+  56,
+  54,
+  44,
+  42,
+  45,
+  44,
+  38,
+  38,
+  34,
+  38,
+  44,
+  48,
+  44,
+  34,
+  34,
+  42,
+  40,
+  48,
+  54
+];
+var AMRIT_KALAM_DURATION_GHATIKAS = 4;
 var SARVARTHA_SIDDHI = {
   1: /* @__PURE__ */ new Set([3, 4, 7, 17]),
   // Mon
@@ -6051,14 +6116,14 @@ var AMRITA_SIDDHI = {
 var DUR_MUHURTA = {
   1: [9, 12],
   // Mon
-  2: [4],
-  // Tue
+  2: [4, 22],
+  // Tue (22 = night muhurta 7; fitted from drik fixtures)
   3: [8],
   // Wed (coincides with Abhijit — suppressed that day)
-  4: [6],
-  // Thu
-  5: [4],
-  // Fri
+  4: [6, 12],
+  // Thu (fitted from drik fixtures)
+  5: [4, 9],
+  // Fri (fitted from drik fixtures)
   6: [1, 2],
   // Sat
   7: [14]
@@ -6213,7 +6278,11 @@ var VARA_TYAJYAM_NAZHIGAI = {
   7: 32
 };
 var VARA_TYAJYAM_DURATION_MIN = 90;
-var INAUSPICIOUS_KARANAS = /* @__PURE__ */ new Set(["Vishti", "Chatushpada", "Naga"]);
+var INAUSPICIOUS_KARANAS = /* @__PURE__ */ new Set([
+  "Vishti",
+  "Chatushpada",
+  "Nagava"
+]);
 var LAGNA_DEFECT_POSITION = {
   Aries: "beginning",
   Taurus: "beginning",
@@ -6252,21 +6321,13 @@ function muhurtaWindows(sunriseJd, sunsetJd, nextSunriseJd) {
   }
   return wins;
 }
-function brahmaMuhurta(sunriseJd, nextSunriseJd, ephe) {
-  const prevSunriseJd = sunriseJd - (nextSunriseJd - sunriseJd);
-  const wins = muhurtaWindows(
-    prevSunriseJd,
-    sunriseJd - (sunriseJd - prevSunriseJd) * (15 / 30),
-    nextSunriseJd
-  );
-  const duration = 96 / (24 * 60);
-  const start = sunriseJd - 2 * duration;
-  const end = sunriseJd - duration;
-  return jdToWin(start, end, ephe);
+function brahmaMuhurta(prevSunsetJd, sunriseJd, ephe) {
+  const nightMuh = (sunriseJd - prevSunsetJd) / 15;
+  return jdToWin(sunriseJd - 2 * nightMuh, sunriseJd - nightMuh, ephe);
 }
 function pratahSandhya(sunriseJd, sunsetJd, nextSunriseJd, ephe) {
-  const wins = muhurtaWindows(sunriseJd, sunsetJd, nextSunriseJd);
-  return jdToWin(wins[1][0], wins[1][1], ephe);
+  const nightMuh = (nextSunriseJd - sunsetJd) / 15;
+  return jdToWin(sunriseJd - 1.5 * nightMuh, sunriseJd, ephe);
 }
 function abhijitMuhurta(sunriseJd, sunsetJd, nextSunriseJd, weekday, ephe) {
   if (DUR_MUHURTA[weekday]?.includes(ABHIJIT_MUHURTA_INDEX)) return null;
@@ -6279,15 +6340,15 @@ function abhijitMuhurta(sunriseJd, sunsetJd, nextSunriseJd, weekday, ephe) {
 }
 function vijayMuhurta(sunriseJd, sunsetJd, nextSunriseJd, ephe) {
   const wins = muhurtaWindows(sunriseJd, sunsetJd, nextSunriseJd);
-  return jdToWin(wins[14][0], wins[14][1], ephe);
+  return jdToWin(wins[11][0], wins[11][1], ephe);
 }
-function godhuliMuhurta(sunsetJd, ephe) {
-  const half = 24 / (24 * 60);
-  return jdToWin(sunsetJd - half, sunsetJd + half, ephe);
+function godhuliMuhurta(sunsetJd, prevSunsetJd, sunriseJd, ephe) {
+  const prevNightMuh = (sunriseJd - prevSunsetJd) / 15;
+  return jdToWin(sunsetJd, sunsetJd + prevNightMuh / 2, ephe);
 }
 function sayahnaSandhya(sunriseJd, sunsetJd, nextSunriseJd, ephe) {
-  const wins = muhurtaWindows(sunriseJd, sunsetJd, nextSunriseJd);
-  return jdToWin(wins[15][0], wins[15][1], ephe);
+  const nightMuh = (nextSunriseJd - sunsetJd) / 15;
+  return jdToWin(sunsetJd, sunsetJd + 1.5 * nightMuh, ephe);
 }
 function nishitaMuhurta(sunriseJd, sunsetJd, nextSunriseJd, ephe) {
   const wins = muhurtaWindows(sunriseJd, sunsetJd, nextSunriseJd);
@@ -6331,8 +6392,16 @@ function varjyamWindow(nakIdx, nakStartJd, nakEndJd, ephe) {
   const start = nakStartJd + ghatikaFrac * nakDur;
   return jdToWin(start, start + durationFrac * nakDur, ephe);
 }
+function varjyamWindow2(customGhOffset, nakIdx, nakStartJd, nakEndJd, ephe) {
+  const nakDur = nakEndJd - nakStartJd;
+  const ghatikaFrac = customGhOffset / GHATIKAS_PER_DAY;
+  const durationFrac = VARJYAM_DURATION_GHATIKAS / GHATIKAS_PER_DAY;
+  const start = nakStartJd + ghatikaFrac * nakDur;
+  return jdToWin(start, start + durationFrac * nakDur, ephe);
+}
 function amritKalamWindow(nakIdx, nakStartJd, nakEndJd, ephe) {
-  const ghatikaOffset = (VARJYAM_GHATIKAS[nakIdx] + AMRIT_OFFSET_GHATIKAS) % GHATIKAS_PER_DAY;
+  const ghatikaOffset = AMRIT_GHATIKAS[nakIdx];
+  if (ghatikaOffset == null) return null;
   const nakDur = nakEndJd - nakStartJd;
   const ghatikaFrac = ghatikaOffset / GHATIKAS_PER_DAY;
   const durationFrac = AMRIT_KALAM_DURATION_GHATIKAS / GHATIKAS_PER_DAY;
@@ -6841,13 +6910,19 @@ var CHANDRA_MASA_BY_SUNSIGN = [
   "Ashadha",
   "Shravana",
   "Bhadrapada",
-  "Ashwin",
+  "Ashwina",
   "Kartika",
   "Margashirsha",
   "Pausha",
   "Magha",
   "Phalguna",
   "Chaitra"
+];
+var AMANTA_MONTHS = [
+  CHANDRA_MASA_BY_SUNSIGN[11],
+  // Chaitra (Sun in Meena at the new moon)
+  ...CHANDRA_MASA_BY_SUNSIGN.slice(0, 11)
+  // Vaishakha .. Phalguna
 ];
 var SIGN_TO_DRIK_RITU = {
   1: "Vasant",
@@ -6900,43 +6975,101 @@ var NATIONAL_CIVIL_MONTHS = [
   { name: "Asadha", days: 31 },
   { name: "Sravana", days: 31 },
   { name: "Bhadra", days: 31 },
-  { name: "Asvina", days: 30 },
+  { name: "Ashwina", days: 30 },
   { name: "Kartika", days: 30 },
   { name: "Agrahayana", days: 30 },
-  { name: "Pausa", days: 30 },
+  { name: "Pausha", days: 30 },
   { name: "Magha", days: 30 },
   { name: "Phalguna", days: 30 }
 ];
 
 // src/calculations/calendars.ts
 var SIDEREAL_FLAGS2 = () => SE.FLG_SWIEPH | SE.FLG_SPEED | SE.FLG_SIDEREAL;
+function dateToJd(year, month, day, ephe) {
+  return ephe.julday(year, month, day, 12);
+}
+var TROP_FLAGS = () => SE.FLG_SWIEPH | SE.FLG_SPEED;
+function elongationAt(jd, ephe) {
+  const s = ephe.calcUt(jd, SE.SUN, TROP_FLAGS()).lon;
+  const m = ephe.calcUt(jd, SE.MOON, TROP_FLAGS()).lon;
+  return ((m - s) % 360 + 360) % 360;
+}
+function lastNewMoonBefore(jd, ephe) {
+  let hi = jd;
+  for (let i = 0; i < 35; i++) {
+    const lo = hi - 1;
+    if (elongationAt(lo, ephe) > elongationAt(hi, ephe)) {
+      return findAngleTime(lo, hi, 0, (t) => elongationAt(t, ephe)) ?? hi;
+    }
+    hi = lo;
+  }
+  return jd - 29.530588;
+}
+function sankrantiInMonth(year, month, signId, ephe) {
+  const lo = dateToJd(year, month, 1, ephe) - 5;
+  const hi = dateToJd(year, month, 28, ephe) + 5;
+  const target = (signId - 1) * 30;
+  return findAngleTime(
+    lo,
+    hi,
+    target,
+    (t) => ephe.calcUt(t, SE.SUN, SIDEREAL_FLAGS2()).lon
+  ) ?? dateToJd(year, month, 15, ephe);
+}
+function chaitraShukla1Jd(year, ephe) {
+  const mesha = sankrantiInMonth(year, 4, 1, ephe);
+  return lastNewMoonBefore(mesha, ephe);
+}
+function kartikShukla1Jd(year, ephe) {
+  const vrischika = sankrantiInMonth(year, 11, 8, ephe);
+  return lastNewMoonBefore(vrischika, ephe);
+}
 function computeCalendars(jd, sunLon, moonLon, tithiIdx, sunriseJd, ephe, samvatsaraNames, nakshatra) {
   const julianDay = jd;
   const modifiedJulianDay = jd - 24000005e-1;
   const rataDie = Math.floor(jd - RATA_DIE_EPOCH_JD);
   const kaliAhargana = Math.floor(jd - KALI_START_JD);
-  const kaliYear = Math.floor(kaliAhargana / 365.25) + 1;
-  const [gregYear, gregMonth, gregDay, gregHour] = ephe.revjul(jd);
-  const afterMeshaIngress = sunLon >= 0;
-  const shakaYear = gregYear - (afterMeshaIngress ? 77 : 78);
+  const [gregYear, gregMonth, gregDay] = ephe.revjul(jd);
+  const chaitraThis = chaitraShukla1Jd(gregYear, ephe);
+  const shakaYear = jd >= chaitraThis ? gregYear - 78 : gregYear - 79;
   const vikramYear = shakaYear + 135;
-  const gujaratiYear = vikramYear - 1;
+  const kaliYear = shakaYear + 3179;
+  const chaitraPrev = chaitraShukla1Jd(gregYear - 1, ephe);
+  const kartikThis = kartikShukla1Jd(gregYear, ephe);
+  const kartikPrev = kartikShukla1Jd(gregYear - 1, ephe);
+  const lastChaitra = jd >= chaitraThis ? chaitraThis : chaitraPrev;
+  const lastKartik = sunriseJd >= kartikThis ? kartikThis : kartikPrev;
+  const gujaratiYear = lastChaitra > lastKartik ? vikramYear - 1 : vikramYear;
   const samvatsaraShakaSuffix = (shakaYear + 11) % 60;
   const samvatsaraVikramSuffix = (vikramYear + 9) % 60;
   const samvatsaraShaka = samvatsaraNames[samvatsaraShakaSuffix] ?? "";
   const samvatsaraVikram = samvatsaraNames[samvatsaraVikramSuffix] ?? "";
   const sunSignId = signIdFromLon(sunLon);
   const niraayanaSolarMonth = getNirayanaSolarMonth(sunSignId - 1);
-  const chandramasaAmanta = CHANDRA_MASA_BY_SUNSIGN[(sunSignId - 1 + 12) % 12];
-  const chandramasaPurnimanta = CHANDRA_MASA_BY_SUNSIGN[sunSignId % 12];
-  const paksha = tithiIdx <= 15 ? "Shukla Paksha" : "Krishna Paksha";
+  const lastNm = lastNewMoonBefore(sunriseJd, ephe);
+  const sunSignAtNm = signIdFromLon(
+    ephe.calcUt(lastNm, SE.SUN, SIDEREAL_FLAGS2()).lon
+  );
+  const amantaIdx = sunSignAtNm % 12;
+  const chandramasaAmanta = AMANTA_MONTHS[amantaIdx];
+  const tithiIdxAtSunrise = tithiIndex(
+    ephe.calcUt(sunriseJd, SE.SUN, SIDEREAL_FLAGS2()).lon,
+    ephe.calcUt(sunriseJd, SE.MOON, SIDEREAL_FLAGS2()).lon
+  );
+  const chandramasaPurnimanta = tithiIdxAtSunrise <= 15 ? chandramasaAmanta : AMANTA_MONTHS[(amantaIdx + 1) % 12];
+  const paksha = tithiIdxAtSunrise <= 15 ? "Shukla Paksha" : "Krishna Paksha";
   const pravishteDays = tithiIdx <= 15 ? tithiIdx : tithiIdx - 15;
   const drikRitu = SIGN_TO_DRIK_RITU[sunSignId] ?? "";
   const vedicRitu = SIGN_TO_VEDIC_RITU[sunSignId] ?? "";
   const drikAyana = UTTARAYANA_SIGNS.has(sunSignId) ? "Uttarayana" : "Dakshinayana";
   const vedicAyana = drikAyana;
-  const nationalCivil = computeNationalCivilDate(jd, shakaYear, false);
-  const nationalNirayana = computeNationalCivilDate(jd, shakaYear, true);
+  const nationalShakaYear = gregMonth > 3 || gregMonth === 3 && gregDay >= (isGregorianLeap(gregYear) ? 21 : 22) ? gregYear - 78 : gregYear - 79;
+  const nationalCivil = computeNationalCivilDate(jd, nationalShakaYear, false);
+  const nationalNirayana = computeNationalCivilDate(
+    jd,
+    nationalShakaYear,
+    true
+  );
   const ayanamshaLahiri = ephe.getAyanamsaUt(jd);
   return {
     kaliYear,
@@ -6948,8 +7081,11 @@ function computeCalendars(jd, sunLon, moonLon, tithiIdx, sunriseJd, ephe, samvat
     shakaYear,
     vikramYear,
     gujaratiYear,
-    nationalCivilDate: { ...nationalCivil, shakaYear },
-    nationalNirayanaDate: { ...nationalNirayana, shakaYear },
+    nationalCivilDate: { ...nationalCivil, shakaYear: nationalShakaYear },
+    nationalNirayanaDate: {
+      ...nationalNirayana,
+      shakaYear: nationalShakaYear
+    },
     samvatsaraShaka,
     samvatsaraVikram,
     samvatsaraShakaSuffix,
@@ -6975,7 +7111,7 @@ function getNirayanaSolarMonth(sunSignIdx) {
     "Ashadha",
     "Shravana",
     "Bhadrapada",
-    "Ashwin",
+    "Ashwina",
     "Kartika",
     "Margashirsha",
     "Pausha",
@@ -7035,11 +7171,11 @@ function findLastSankranti(jd, signId, ephe) {
   const result = findAngleTime(jd - 32, jd, targetDeg, sunLonAt2);
   return result ?? jd;
 }
-function computeTamilCalendar(jd, sunSignId, sunSignStartJd, weekday, ephe, tamilMonths, samvatsaraNames, samvatsaraTaNames) {
+function computeTamilCalendar(jd, sunSignId, sunSignStartJd, weekday, ephe, tamilMonths, samvatsaraNames, samvatsaraTaNames, shakaYearOverride) {
   const [gregYear] = ephe.revjul(jd);
   const tamilMonth = tamilMonths[sunSignId];
   const dayInMonth = Math.floor(jd - sunSignStartJd) + 1;
-  const shakaYear = gregYear - 78;
+  const shakaYear = shakaYearOverride ?? gregYear - 78;
   const samvIdx = (shakaYear + 11) % 60;
   const EN_DAYS = [
     "Monday",
@@ -7179,6 +7315,8 @@ async function computeDetailedPanchang(date, latitude, longitude, timezone = "UT
     const sunriseJd = solarTimes.sunrise ?? jdNoon - 0.25;
     const sunsetJd = solarTimes.sunset ?? jdNoon + 0.25;
     const nextSunriseJd = solarTimes.nextSunrise ?? sunriseJd + 1;
+    const prevSolarTimes = computeSolarTimes(jdNoon - 1, lat, lon, ephe);
+    const prevSunsetJd = prevSolarTimes.sunset ?? sunsetJd - 1;
     const sunriseIso = solarTimes.sunrise != null ? jdToIso(sunriseJd, ephe) : null;
     const sunsetIso = solarTimes.sunset != null ? jdToIso(sunsetJd, ephe) : null;
     const moonriseIso = solarTimes.moonrise != null ? jdToIso(solarTimes.moonrise, ephe) : null;
@@ -7246,9 +7384,9 @@ async function computeDetailedPanchang(date, latitude, longitude, timezone = "UT
       ephe,
       (i) => table.nakshatras[i] ?? ""
     );
-    const tIdx = tithiIndex(sunLon, moonLon);
+    const tIdx = tithiNow?.index ?? tithiIndex(sunLon, moonLon);
     const paksha = tIdx <= 15 ? "Shukla Paksha" : "Krishna Paksha";
-    const brahma = brahmaMuhurta(sunriseJd, nextSunriseJd, ephe);
+    const brahma = brahmaMuhurta(prevSunsetJd, sunriseJd, ephe);
     const pratah = pratahSandhya(sunriseJd, sunsetJd, nextSunriseJd, ephe);
     const abhijit = abhijitMuhurta(
       sunriseJd,
@@ -7258,26 +7396,68 @@ async function computeDetailedPanchang(date, latitude, longitude, timezone = "UT
       ephe
     );
     const vijay = vijayMuhurta(sunriseJd, sunsetJd, nextSunriseJd, ephe);
-    const godhuli = godhuliMuhurta(sunsetJd, ephe);
+    const godhuli = godhuliMuhurta(sunsetJd, prevSunsetJd, sunriseJd, ephe);
     const sayahna = sayahnaSandhya(sunriseJd, sunsetJd, nextSunriseJd, ephe);
     const nishita = nishitaMuhurta(sunriseJd, sunsetJd, nextSunriseJd, ephe);
     const varjyamWins = [];
     const amritWins = [];
-    for (const nak of nakSeq) {
-      const w = varjyamWindow(
-        nak.index,
-        new Date(nak.starts_at ?? nak.ends_at).getTime() / 864e5 + 24405875e-1,
-        new Date(nak.ends_at).getTime() / 864e5 + 24405875e-1,
-        ephe
-      );
-      if (w) varjyamWins.push(w);
-      const a = amritKalamWindow(
-        nak.index,
-        new Date(nak.starts_at ?? nak.ends_at).getTime() / 864e5 + 24405875e-1,
-        new Date(nak.ends_at).getTime() / 864e5 + 24405875e-1,
-        ephe
-      );
-      if (a) amritWins.push(a);
+    const inDay = (w) => {
+      const ws = new Date(w.start).getTime();
+      const sunriseMs = (sunriseJd - 24405875e-1) * 864e5;
+      const nextSunriseMs = (nextSunriseJd - 24405875e-1) * 864e5;
+      return ws >= sunriseMs && ws < nextSunriseMs;
+    };
+    for (let ni = 0; ni < nakSeq.length; ni++) {
+      const nak = nakSeq[ni];
+      const isFirst = ni === 0;
+      const isLast = ni === nakSeq.length - 1;
+      let nakStartJd;
+      if (isFirst) {
+        const nakEndJd0 = new Date(nak.ends_at).getTime() / 864e5 + 24405875e-1;
+        const targetLon = (nak.index * NAK_SPAN + 360) % 360;
+        const found = findAngleTime(
+          nakEndJd0 - 1.5,
+          nakEndJd0 - 0.01,
+          targetLon,
+          (jd) => {
+            const lon2 = ephe.calcUt(
+              jd,
+              SE.MOON,
+              SE.FLG_SWIEPH | SE.FLG_SPEED | SE.FLG_SIDEREAL
+            ).lon;
+            return (lon2 % 360 + 360) % 360;
+          }
+        );
+        nakStartJd = found ?? nakEndJd0 - 1;
+      } else {
+        nakStartJd = new Date(nak.starts_at ?? nak.ends_at).getTime() / 864e5 + 24405875e-1;
+      }
+      let nakEndJd;
+      if (isLast) {
+        const nextNakTargetLon = (nak.index + 1) % 27 * NAK_SPAN;
+        const lo = nakStartJd + 0.01;
+        const hi = nakStartJd + 1.5;
+        const found = findAngleTime(lo, hi, nextNakTargetLon, (jd) => {
+          const lon2 = ephe.calcUt(
+            jd,
+            SE.MOON,
+            SE.FLG_SWIEPH | SE.FLG_SPEED | SE.FLG_SIDEREAL
+          ).lon;
+          return (lon2 % 360 + 360) % 360;
+        });
+        nakEndJd = found ?? nakStartJd + 1;
+      } else {
+        nakEndJd = new Date(nak.ends_at).getTime() / 864e5 + 24405875e-1;
+      }
+      const w = varjyamWindow(nak.index, nakStartJd, nakEndJd, ephe);
+      if (w && inDay(w)) varjyamWins.push(w);
+      const gh2 = VARJYAM_GHATIKAS_2[nak.index];
+      if (gh2 != null) {
+        const w2 = varjyamWindow2(gh2, nak.index, nakStartJd, nakEndJd, ephe);
+        if (w2 && inDay(w2)) varjyamWins.push(w2);
+      }
+      const a = amritKalamWindow(nak.index, nakStartJd, nakEndJd, ephe);
+      if (a && inDay(a)) amritWins.push(a);
     }
     const curNakIdx = nakNow?.index ?? 0;
     const sarvarthaWins = [];
@@ -7348,7 +7528,8 @@ async function computeDetailedPanchang(date, latitude, longitude, timezone = "UT
         ephe,
         TAMIL_MONTHS_BY_SIGN,
         table.samvatsaras,
-        table.samvatsaras
+        table.samvatsaras,
+        calInfo.shakaYear
       );
     } catch {
     }
@@ -7479,12 +7660,12 @@ async function computeDetailedPanchang(date, latitude, longitude, timezone = "UT
         national_civil_date: {
           month: calInfo.nationalCivilDate.month,
           day: calInfo.nationalCivilDate.day,
-          shaka_year: calInfo.shakaYear
+          shaka_year: calInfo.nationalCivilDate.shakaYear
         },
         national_nirayana_date: {
           month: calInfo.nationalNirayanaDate.month,
           day: calInfo.nationalNirayanaDate.day,
-          shaka_year: calInfo.shakaYear
+          shaka_year: calInfo.nationalNirayanaDate.shakaYear
         }
       }
     };
@@ -8566,7 +8747,7 @@ async function computeChart(birthInfo, locale4 = "en") {
 // package.json
 var package_default = {
   name: "vpv-panchangam",
-  version: "0.4.0",
+  version: "0.5.0",
   description: "Vedic Panchanga and Kundali calculator for Node.js",
   main: "dist/index.js",
   types: "dist/index.d.ts",
@@ -8580,6 +8761,7 @@ var package_default = {
     test: "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:drik": "DRIK_PARITY=1 vitest run test/drik-parity.test.ts",
     lint: "eslint src/",
     format: "prettier --write src/ test/",
     "format:check": "prettier --check src/ test/",
