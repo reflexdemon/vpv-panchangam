@@ -6342,9 +6342,9 @@ function vijayMuhurta(sunriseJd, sunsetJd, nextSunriseJd, ephe) {
   const wins = muhurtaWindows(sunriseJd, sunsetJd, nextSunriseJd);
   return jdToWin(wins[11][0], wins[11][1], ephe);
 }
-function godhuliMuhurta(sunsetJd, prevSunsetJd, sunriseJd, ephe) {
-  const prevNightMuh = (sunriseJd - prevSunsetJd) / 15;
-  return jdToWin(sunsetJd, sunsetJd + prevNightMuh / 2, ephe);
+function godhuliMuhurta(sunsetJd, nextSunriseJd, ephe) {
+  const nightMuh = (nextSunriseJd - sunsetJd) / 15;
+  return jdToWin(sunsetJd, sunsetJd + nightMuh / 2, ephe);
 }
 function sayahnaSandhya(sunriseJd, sunsetJd, nextSunriseJd, ephe) {
   const nightMuh = (nextSunriseJd - sunsetJd) / 15;
@@ -7016,8 +7016,11 @@ function sankrantiInMonth(year, month, signId, ephe) {
     (t) => ephe.calcUt(t, SE.SUN, SIDEREAL_FLAGS2()).lon
   ) ?? dateToJd(year, month, 15, ephe);
 }
+function meshaSankrantiJd(year, ephe) {
+  return sankrantiInMonth(year, 4, 1, ephe);
+}
 function chaitraShukla1Jd(year, ephe) {
-  const mesha = sankrantiInMonth(year, 4, 1, ephe);
+  const mesha = meshaSankrantiJd(year, ephe);
   return lastNewMoonBefore(mesha, ephe);
 }
 function kartikShukla1Jd(year, ephe) {
@@ -7175,7 +7178,13 @@ function computeTamilCalendar(jd, sunSignId, sunSignStartJd, weekday, ephe, tami
   const [gregYear] = ephe.revjul(jd);
   const tamilMonth = tamilMonths[sunSignId];
   const dayInMonth = Math.floor(jd - sunSignStartJd) + 1;
-  const shakaYear = shakaYearOverride ?? gregYear - 78;
+  let shakaYear;
+  if (shakaYearOverride !== void 0) {
+    shakaYear = shakaYearOverride;
+  } else {
+    const meshaJd = meshaSankrantiJd(gregYear, ephe);
+    shakaYear = jd >= meshaJd ? gregYear - 78 : gregYear - 79;
+  }
   const samvIdx = (shakaYear + 11) % 60;
   const EN_DAYS = [
     "Monday",
@@ -7384,7 +7393,8 @@ async function computeDetailedPanchang(date, latitude, longitude, timezone = "UT
       ephe,
       (i) => table.nakshatras[i] ?? ""
     );
-    const tIdx = tithiNow?.index ?? tithiIndex(sunLon, moonLon);
+    const noonTithiIdx = tithiIndex(sunLon, moonLon);
+    const tIdx = tithiNow?.index ?? noonTithiIdx;
     const paksha = tIdx <= 15 ? "Shukla Paksha" : "Krishna Paksha";
     const brahma = brahmaMuhurta(prevSunsetJd, sunriseJd, ephe);
     const pratah = pratahSandhya(sunriseJd, sunsetJd, nextSunriseJd, ephe);
@@ -7396,7 +7406,7 @@ async function computeDetailedPanchang(date, latitude, longitude, timezone = "UT
       ephe
     );
     const vijay = vijayMuhurta(sunriseJd, sunsetJd, nextSunriseJd, ephe);
-    const godhuli = godhuliMuhurta(sunsetJd, prevSunsetJd, sunriseJd, ephe);
+    const godhuli = godhuliMuhurta(sunsetJd, nextSunriseJd, ephe);
     const sayahna = sayahnaSandhya(sunriseJd, sunsetJd, nextSunriseJd, ephe);
     const nishita = nishitaMuhurta(sunriseJd, sunsetJd, nextSunriseJd, ephe);
     const varjyamWins = [];
@@ -7512,7 +7522,7 @@ async function computeDetailedPanchang(date, latitude, longitude, timezone = "UT
       jdNoon,
       sunLon,
       moonLon,
-      tIdx,
+      noonTithiIdx,
       sunriseJd,
       ephe,
       table.samvatsaras
@@ -7520,6 +7530,7 @@ async function computeDetailedPanchang(date, latitude, longitude, timezone = "UT
     const sunSignStartJd = findLastSankranti(jdNoon, sunSignId, ephe);
     let tamilCal = null;
     try {
+      const taTable = locale4 === "ta" ? table : getLocaleTable("ta");
       tamilCal = computeTamilCalendar(
         jdNoon,
         sunSignId,
@@ -7528,8 +7539,7 @@ async function computeDetailedPanchang(date, latitude, longitude, timezone = "UT
         ephe,
         TAMIL_MONTHS_BY_SIGN,
         table.samvatsaras,
-        table.samvatsaras,
-        calInfo.shakaYear
+        taTable.samvatsaras
       );
     } catch {
     }
