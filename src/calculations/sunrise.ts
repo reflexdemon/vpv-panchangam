@@ -33,10 +33,9 @@ export interface DaySegments {
 /**
  * Compute sunrise/sunset/moonrise/moonset for a given date and location.
  *
- * Moonrise/moonset convention: ALT0_MOON = −0.825° (lunar parallax + refraction).
- * Residual drift vs DrikPanchang is 4–10 min for most dates, up to ~60 min at
- * high latitudes or near new moon. This is a known convention difference and is
- * not release-gated. See README for details.
+ * Moonrise/moonset convention: ALT0_MOON = 0° (topocentric center at horizon,
+ * matching DrikPanchang convention). Events are evaluated within the panchang day
+ * [sunrise, nextSunrise).
  *
  * @param jdNoon  Julian Day at noon UT of the target date
  * @param lat     Latitude
@@ -61,11 +60,17 @@ export function computeSolarTimes(
     sunset != null
       ? ephe.riseTrans(sunset, SE.SUN, geopos, SE.CALC_RISE)
       : null;
-  const moonrise = ephe.riseTrans(jdMidnight, SE.MOON, geopos, SE.CALC_RISE);
-  const moonset =
-    moonrise != null
-      ? ephe.riseTrans(moonrise, SE.MOON, geopos, SE.CALC_SET)
-      : null;
+
+  const searchStart = sunrise ?? jdMidnight;
+  const searchEnd = nextSunrise ?? (searchStart + 1);
+
+  // DrikPanchang convention for Moonrise/Moonset:
+  // Evaluated within the panchang day [sunrise, nextSunrise), with topocentric
+  // center at geometric horizon (alt0 = 0).
+  const mr = ephe.riseTrans(searchStart, SE.MOON, geopos, SE.CALC_RISE, 0);
+  const moonrise = mr != null && mr < searchEnd ? mr : null;
+  const ms = ephe.riseTrans(searchStart, SE.MOON, geopos, SE.CALC_SET, 0);
+  const moonset = ms != null && ms < searchEnd ? ms : null;
 
   return { sunrise, sunset, moonrise, moonset, nextSunrise };
 }

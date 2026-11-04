@@ -59,7 +59,7 @@ const EARTH_RADIUS_KM = 6378.137;
 const EARTH_RADIUS_M = 6378140; // for horizon-dip at observer elevation
 const AU_KM = 149597870.7;
 const ALT0_SUN = -0.8333; // naut. refraction + solar radius
-const ALT0_MOON = -0.5667 - 0.2583; // refraction + lunar radius complement
+const ALT0_MOON = -0.5667 - 0.2583; // refraction + lunar radius complement (native swisseph default)
 
 /** Normalize an angle into [0, 360). */
 function norm360(x: number): number {
@@ -140,10 +140,12 @@ function computeTransit(
   body: number,
   geopos: [number, number, number],
   which: number,
+  customAlt0?: number,
 ): number | null {
   const [lon, lat] = geopos;
+  const defaultAlt0 = body === SE.MOON ? ALT0_MOON : ALT0_SUN;
   const alt0 =
-    (body === SE.MOON ? ALT0_MOON : ALT0_SUN) - horizonDip(geopos[2]);
+    (customAlt0 ?? defaultAlt0) - horizonDip(geopos[2]);
   const wantRise = which === SE.CALC_RISE;
   const win = 1.7; // max hours between consecutive rise/set events
   const step = 0.02;
@@ -293,9 +295,10 @@ export class BrowserEphemeris implements IEphemeris {
     body: number,
     geopos: [number, number, number],
     which: number,
+    alt0?: number,
   ): number | null {
     try {
-      return computeTransit(this._swe, jd, body, geopos, which);
+      return computeTransit(this._swe, jd, body, geopos, which, alt0);
     } catch {
       return null;
     }

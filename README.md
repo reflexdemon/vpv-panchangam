@@ -287,7 +287,7 @@ Captured fixtures are committed as JSON under `test/fixtures/drik/`. The parity 
 npm run test:drik    # DRIK_PARITY=1 npx vitest run test/drik-parity.test.ts
 ```
 
-**Moonrise/moonset:** The library uses Swiss Ephemeris with a lunar parallax and atmospheric refraction correction (`ALT0_MOON = −0.825°`). Residual drift vs drik's displayed moonrise/moonset is typically 4–10 minutes for most fixtures but can reach ~60 minutes at high latitudes or near new moon. This is a known convention difference and is **not release-gated**.
+**Moonrise/moonset:** The library evaluates moonrise and moonset within the panchang day `[sunrise, nextSunrise)` with the Moon's topocentric center at the geometric horizon (`alt0 = 0°`), matching DrikPanchang convention within 1 minute across all fixtures.
 
 > **Note on Kelowna, BC (2026-11-09):** On 2026-11-09, drikpanchang.com rendered wall-clock times for Kelowna in PDT (UTC−7) even though Daylight Saving Time in British Columbia ended on 2026-11-01 (PST, UTC−8). The library's astronomical UTC instants are correct.
 
