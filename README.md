@@ -41,11 +41,20 @@ the existing code blocks, so results stay put.
 
 The band under the title shows how to load the package: **npm** (Node and
 bundlers), **jsDelivr** and **unpkg** (no build step), and a paste-ready
-`<script type="module">` tag. The version string is injected from
-`package.json` at build time, so the pinned URLs never drift from the
-manifest — but the referenced build must actually be published at that
-version for the URLs to resolve, so the exact version must be bumped here by
-hand at release time.
+`<script type="module">` tag.
+
+- **npm** — the pinned install command: `npm install vpv-panchangam@<version>`,
+  followed by the bare-specifier `import { … } from "vpv-panchangam"` that a
+  plain `npm install` produces.
+- **jsDelivr** / **unpkg** — no-build-step ESM imports pinned to the exact
+  browser bundle (`…/dist/browser/vpv-panchangam.mjs`).
+- **`<script type="module">`** — the same pinned URL inside a module tag.
+
+The version is injected from `package.json` at build time, so the snippets the
+band renders (npm pinned, CDN URLs, script tag) always carry the current version
+— never a hardcoded one, and never the stale fallback. The referenced build must
+actually be published at that version for the URLs to resolve, so the exact
+version must be bumped here by hand at release time.
 
 ## Run locally
 
