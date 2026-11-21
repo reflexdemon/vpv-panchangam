@@ -130,12 +130,17 @@ describe("snippetFor — version threading", () => {
 });
 
 describe("installBlock", () => {
-  it("npm shows the install command and a bare-specifier import", () => {
+  it("npm shows the pinned install command and a bare-specifier import", () => {
     const out = installBlock("npm", "0.4.0");
-    expect(out).toContain("npm install vpv-panchangam");
+    expect(out).toContain("npm install vpv-panchangam@0.4.0");
     expect(out).toContain(
       'import { computeDetailedPanchang } from "vpv-panchangam";',
     );
+  });
+
+  it("threads the current version into the npm install command", () => {
+    const out = installBlock("npm", "1.1.0");
+    expect(out).toContain("npm install vpv-panchangam@1.1.0");
   });
 
   it("jsdelivr shows the pinned browser bundle URL", () => {

@@ -10,7 +10,7 @@
   "use strict";
 
   var PACKAGE = "vpv-panchangam";
-  var FALLBACK_VERSION = "0.4.0";
+  var FALLBACK_VERSION = "1.1.0";
   var BROWSER_ENTRY = "dist/browser/vpv-panchangam.mjs";
   var CDNS = {
     jsdelivr: "https://cdn.jsdelivr.net/npm/",
@@ -77,6 +77,8 @@
       return (
         "npm install " +
         PACKAGE +
+        "@" +
+        ver +
         "\n\n" +
         'import { computeDetailedPanchang } from "' +
         PACKAGE +
