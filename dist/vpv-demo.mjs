@@ -8757,7 +8757,7 @@ async function computeChart(birthInfo, locale4 = "en") {
 // package.json
 var package_default = {
   name: "vpv-panchangam",
-  version: "1.0.0",
+  version: "1.1.0",
   description: "Vedic Panchanga and Kundali calculator for Node.js",
   main: "dist/index.js",
   types: "dist/index.d.ts",
