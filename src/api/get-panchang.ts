@@ -355,8 +355,7 @@ export async function computeDetailedPanchang(
         });
         nakEndJd = found ?? nakStartJd + 1;
       } else {
-        nakEndJd =
-          new Date(nak.ends_at).getTime() / 86400000 + 2440587.5;
+        nakEndJd = new Date(nak.ends_at).getTime() / 86400000 + 2440587.5;
       }
 
       const w = varjyamWindow(nak.index, nakStartJd, nakEndJd, ephe);
