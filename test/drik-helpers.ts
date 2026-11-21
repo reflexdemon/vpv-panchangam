@@ -66,8 +66,43 @@ export interface LoadedFixture {
   page: DrikPage;
 }
 
+// ─── Tamil surface fixtures (drik tamil-month-panchangam pages) ──────────────
+
+export interface DrikTamilMonth {
+  id: number; // solar sign id (1-12)
+  en: string;
+  ta: string;
+  rashi: string;
+}
+
+export interface DrikTamilYear {
+  id: number; // samvatsara id (1-60)
+  name_en: string;
+  name_ta: string;
+  gregorian_start_year: number;
+}
+
+export interface DrikTamilPage {
+  slug: string;
+  date: string; // YYYY-MM-DD
+  timezone: string;
+  locationName: string;
+  latitude: number;
+  longitude: number;
+  week_day: { en: string; ta: string };
+  tamil_date: string;
+  tamil_month: DrikTamilMonth;
+  tamil_year: DrikTamilYear;
+  lunar_month_amanta: string;
+  lunar_month_purnimanta: string;
+  shaka_samvat: number;
+  shaka_name: string;
+  kaliyuga_years: number;
+}
+
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DRIK_DIR = path.join(HERE, "fixtures", "drik");
+const TAMIL_DRIK_DIR = path.join(DRIK_DIR, "tamil");
 
 /** Load every committed fixture: manifest locations x dates joined with pages. */
 export function loadFixtures(): LoadedFixture[] {
@@ -89,6 +124,24 @@ export function loadFixtures(): LoadedFixture[] {
         page,
       });
     }
+  }
+  return out;
+}
+
+/**
+ * Load every committed DRIK Tamil-panchang fixture: the
+ * `test/fixtures/drik/tamil/pages/*.json` files captured from
+ * https://www.drikpanchang.com/tamil/tamil-month-panchangam.html (offline:
+ * committed JSON only, no network).
+ */
+export function loadTamilFixtures(): DrikTamilPage[] {
+  const out: DrikTamilPage[] = [];
+  const files = ["chennai-2026-03-19.json", "chennai-2026-04-14.json"];
+  for (const file of files) {
+    const page = JSON.parse(
+      fs.readFileSync(path.join(TAMIL_DRIK_DIR, "pages", file), "utf8"),
+    ) as DrikTamilPage;
+    out.push(page);
   }
   return out;
 }

@@ -1,0 +1,31 @@
+{
+  "slug": "chennai",
+  "date": "2026-03-19",
+  "timezone": "Asia/Kolkata",
+  "locationName": "Chennai",
+  "latitude": 13.0827,
+  "longitude": 80.2707,
+  "week_day": {
+    "en": "Thursday",
+    "ta": "வியாழன்"
+  },
+  "tamil_date": "5 பங்குனி",
+  "tamil_month": {
+    "id": 12,
+    "en": "Panguni",
+    "ta": "பங்குனி",
+    "rashi": ""
+  },
+  "tamil_year": {
+    "id": 39,
+    "name_en": "Vishvavasu",
+    "name_ta": "விசுவாசு",
+    "gregorian_start_year": 2026
+  },
+  "lunar_month_amanta": "Phalguna",
+  "lunar_month_purnimanta": "Chaitra",
+  "shaka_samvat": 1948,
+  "shaka_name": "Parabhava",
+  "kaliyuga_years": 5127,
+  "source": "https://www.drikpanchang.com/tamil/tamil-month-panchangam.html?geoname-id=1264527&date=19/03/2026"
+}

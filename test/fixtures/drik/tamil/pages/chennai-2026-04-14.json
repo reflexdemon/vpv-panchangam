@@ -1,0 +1,30 @@
+{
+  "slug": "chennai",
+  "date": "2026-04-14",
+  "timezone": "Asia/Kolkata",
+  "locationName": "Chennai",
+  "latitude": 13.0827,
+  "longitude": 80.2707,
+  "week_day": {
+    "en": "Tuesday",
+    "ta": "செவ்வாய்"
+  },
+  "tamil_date": "1 சித்திரை",
+  "tamil_month": {
+    "en": "Chithirai",
+    "ta": "சித்திரை",
+    "id": 1,
+    "rashi": ""
+  },
+  "tamil_year": {
+    "id": 40,
+    "name_en": "Parabhava",
+    "name_ta": "பரிபவ",
+    "gregorian_start_year": 2026
+  },
+  "lunar_month_amanta": "Chaitra",
+  "lunar_month_purnimanta": "Vaishakha",
+  "shaka_samvat": 1948,
+  "shaka_name": "Parabhava",
+  "kaliyuga_years": 5127
+}
